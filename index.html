@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>贪吃蛇</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Segoe UI', 'PingFang SC', sans-serif;
+    user-select: none;
+    padding: 20px;
+  }
+  .wrapper {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+  .game-container { text-align: center; }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 0 4px;
+    gap: 8px;
+  }
+  .score-box {
+    background: #16213e;
+    color: #eee;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  .score-box span { color: #0f0; font-weight: bold; font-size: 18px; }
+  #progress { color: #ffd700 !important; }
+  canvas {
+    border: 2px solid #0f3460;
+    border-radius: 4px;
+    background: #16213e;
+    display: block;
+  }
+  .hint { color: #666; margin-top: 12px; font-size: 13px; }
+  button {
+    margin-top: 8px; padding: 10px 30px; font-size: 16px;
+    border: none; border-radius: 8px; cursor: pointer;
+    background: #0f3460; color: #eee; transition: background 0.2s;
+  }
+  button:hover { background: #1a4a8a; }
+
+  /* Leaderboard */
+  .leaderboard {
+    background: #16213e;
+    border: 2px solid #0f3460;
+    border-radius: 8px;
+    padding: 16px;
+    min-width: 200px;
+    max-height: 520px;
+    overflow-y: auto;
+  }
+  .leaderboard h3 {
+    color: #ffd700;
+    text-align: center;
+    margin-bottom: 12px;
+    font-size: 18px;
+    border-bottom: 1px solid #0f3460;
+    padding-bottom: 8px;
+  }
+  .leaderboard ol {
+    list-style: none;
+    padding: 0;
+  }
+  .leaderboard li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px;
+    border-radius: 4px;
+    color: #ccc;
+    font-size: 14px;
+    gap: 12px;
+  }
+  .leaderboard li:nth-child(1) { color: #ffd700; font-weight: bold; }
+  .leaderboard li:nth-child(2) { color: #c0c0c0; }
+  .leaderboard li:nth-child(3) { color: #cd7f32; }
+  .leaderboard li.highlight {
+    background: rgba(255,215,0,0.1);
+    animation: flash 0.5s ease-in-out 3;
+  }
+  @keyframes flash {
+    50% { background: rgba(255,215,0,0.25); }
+  }
+  .leaderboard .rank { width: 24px; text-align: center; }
+  .leaderboard .score { color: #0f0; font-weight: bold; min-width: 40px; text-align: right; }
+  .leaderboard .date { color: #888; font-size: 11px; }
+  .leaderboard .empty { color: #555; text-align: center; padding: 20px 0; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="game-container">
+    <div class="header">
+      <div class="score-box">得分 <span id="score">0</span></div>
+      <div class="score-box">大球 <span id="progress">0/5</span></div>
+      <div class="score-box">最高分 <span id="best">0</span></div>
+    </div>
+    <canvas id="canvas"></canvas>
+    <p class="hint">方向键 ↑↓←→ 控制移动 | 空格键重新开始</p>
+    <button id="restart">重新开始</button>
+  </div>
+  <div class="leaderboard" id="leaderboard">
+    <h3>排行榜</h3>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const bestEl = document.getElementById('best');
+const progressEl = document.getElementById('progress');
+const lbEl = document.getElementById('leaderboard');
+
+const GRID = 20;
+const CELL = 25;
+const SIZE = GRID * CELL;
+canvas.width = SIZE;
+canvas.height = SIZE;
+
+const DIR = { UP: {x:0,y:-1}, DOWN: {x:0,y:1}, LEFT: {x:-1,y:0}, RIGHT: {x:1,y:0} };
+const BIG_FOOD_LIFE = 5000;
+const BIG_FOOD_MAX = 50;
+const BIG_FOOD_MIN = 10;
+
+let snake, food, bigFood, direction, nextDirection, score, best, gameOver, gameLoop, eatCount;
+
+best = parseInt(localStorage.getItem('snakeBest')) || 0;
+bestEl.textContent = best;
+
+// ---- Leaderboard ----
+function loadLB() {
+  try { return JSON.parse(localStorage.getItem('snakeLB')) || []; }
+  catch(e) { return []; }
+}
+function saveLB(data) { localStorage.setItem('snakeLB', JSON.stringify(data)); }
+
+function addScore(s) {
+  var lb = loadLB();
+  var entry = { score: s, date: new Date().toLocaleDateString('zh-CN') };
+  lb.push(entry);
+  lb.sort(function(a,b) { return b.score - a.score; });
+  lb = lb.slice(0, 10);
+  saveLB(lb);
+  return { list: lb, newEntry: entry };
+}
+
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+function renderLB(highlightEntry) {
+  var lb = loadLB();
+  var h = '<h3>排行榜</h3>';
+  if (lb.length === 0) {
+    h += '<div class="empty">还没有成绩<br>快来玩一局吧！</div>';
+  } else {
+    h += '<ol>';
+    for (var i = 0; i < lb.length; i++) {
+      var cls = '';
+      if (highlightEntry && lb[i].score === highlightEntry.score && lb[i].date === highlightEntry.date) {
+        cls = ' highlight';
+      }
+      h += '<li class="' + cls + '">';
+      h += '<span class="rank">' + (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)) + '</span>';
+      h += '<span class="score">' + lb[i].score + '</span>';
+      h += '<span class="date">' + lb[i].date + '</span>';
+      h += '</li>';
+    }
+    h += '</ol>';
+  }
+  lbEl.innerHTML = h;
+}
+
+function init() {
+  var cx = Math.floor(GRID / 2);
+  snake = [
+    {x: cx,   y: cx},
+    {x: cx-1, y: cx},
+    {x: cx-2, y: cx},
+  ];
+  direction = DIR.RIGHT;
+  nextDirection = DIR.RIGHT;
+  score = 0;
+  gameOver = false;
+  bigFood = null;
+  eatCount = 0;
+  scoreEl.textContent = '0';
+  progressEl.textContent = '0/5';
+  spawnFood();
+}
+
+function randomFreePos(extra) {
+  var occupied = new Set(snake.map(function(s) { return s.x + ',' + s.y; }));
+  if (food) occupied.add(food.x + ',' + food.y);
+  if (extra) occupied.add(extra.x + ',' + extra.y);
+  var free = [];
+  for (var x = 0; x < GRID; x++)
+    for (var y = 0; y < GRID; y++)
+      if (!occupied.has(x + ',' + y))
+        free.push({x: x, y: y});
+  if (free.length === 0) return null;
+  return free[Math.floor(Math.random() * free.length)];
+}
+
+function spawnFood() {
+  var pos = randomFreePos(bigFood);
+  if (pos) food = pos;
+}
+
+function spawnBigFood() {
+  var pos = randomFreePos(null);
+  if (pos) bigFood = { x: pos.x, y: pos.y, born: Date.now() };
+}
+
+// ---- Draw ----
+function drawSnake() {
+  var len = snake.length;
+  if (len === 0) return;
+
+  // Draw body from tail to head (head draws on top)
+  for (var j = 0; j < len; j++) {
+    var s = snake[j];
+    var cx = s.x * CELL + CELL/2;
+    var cy = s.y * CELL + CELL/2;
+    var isHead = (j === len - 1);
+    var isTail = (j === 0);
+
+    // color gradient: tail dark green → head bright green
+    var t = j / Math.max(len - 1, 1);
+    var R = Math.floor(20 + 90 * t);
+    var G = Math.floor(100 + 155 * t);
+    var B = Math.floor(20 + 30 * t);
+
+    var r = isHead ? CELL/2 - 2 : (isTail ? CELL/3 : CELL/2.4);
+
+    // body segment
+    ctx.fillStyle = 'rgb(' + R + ',' + G + ',' + B + ')';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // belly highlight
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.08 + 0.07 * t) + ')';
+    ctx.beginPath();
+    ctx.arc(cx - 2, cy - r*0.3, r * 0.55, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Connect adjacent segments with thick lines for smooth body
+  ctx.lineCap = 'round';
+  for (var k = 0; k < len - 1; k++) {
+    var a = snake[k];
+    var b = snake[k + 1];
+    var ax = a.x * CELL + CELL/2;
+    var ay = a.y * CELL + CELL/2;
+    var bx = b.x * CELL + CELL/2;
+    var by = b.y * CELL + CELL/2;
+    var tk = k / Math.max(len - 1, 1);
+    var RR = Math.floor(20 + 90 * tk);
+    var GG = Math.floor(100 + 155 * tk);
+    var BB = Math.floor(20 + 30 * tk);
+
+    ctx.strokeStyle = 'rgb(' + RR + ',' + GG + ',' + BB + ')';
+    ctx.lineWidth = CELL * 0.78;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(bx, by);
+    ctx.stroke();
+
+    // lighter center line
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = CELL * 0.3;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(bx, by);
+    ctx.stroke();
+  }
+
+  // Redraw head on top
+  var head = snake[len - 1];
+  var hx = head.x * CELL + CELL/2;
+  var hy = head.y * CELL + CELL/2;
+
+  // head slightly wider
+  ctx.fillStyle = 'rgb(80,220,50)';
+  ctx.beginPath();
+  ctx.ellipse(hx, hy, CELL/2 - 1, CELL/2 - 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // eyes
+  var eyeOffX = 0, eyeOffY = 0;
+  var dir = direction;
+  if (dir.x === 1) { eyeOffX = 4; eyeOffY = 0; }
+  else if (dir.x === -1) { eyeOffX = -4; eyeOffY = 0; }
+  else if (dir.y === -1) { eyeOffX = 0; eyeOffY = -4; }
+  else if (dir.y === 1) { eyeOffX = 0; eyeOffY = 4; }
+
+  var perpX = dir.y * 5;
+  var perpY = dir.x * 5;
+
+  // left eye
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(hx + eyeOffX + perpX, hy + eyeOffY + perpY, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#111';
+  ctx.beginPath();
+  ctx.arc(hx + eyeOffX + perpX + dir.x*1.5, hy + eyeOffY + perpY + dir.y*1.5, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // right eye
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(hx + eyeOffX - perpX, hy + eyeOffY - perpY, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#111';
+  ctx.beginPath();
+  ctx.arc(hx + eyeOffX - perpX + dir.x*1.5, hy + eyeOffY - perpY + dir.y*1.5, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // tongue
+  var tongueLen = 10 + 3 * Math.sin(Date.now() / 150);
+  var tx = hx + dir.x * (CELL/2 + tongueLen);
+  var ty = hy + dir.y * (CELL/2 + tongueLen);
+  ctx.strokeStyle = '#e94560';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(hx + dir.x * (CELL/2 - 2), hy + dir.y * (CELL/2 - 2));
+  ctx.lineTo(tx, ty);
+  ctx.stroke();
+
+  // tongue fork
+  var forkX = dir.y * 3;
+  var forkY = dir.x * 3;
+  ctx.beginPath();
+  ctx.moveTo(tx, ty);
+  ctx.lineTo(tx + forkX - dir.x*2, ty + forkY - dir.y*2);
+  ctx.moveTo(tx, ty);
+  ctx.lineTo(tx - forkX - dir.x*2, ty - forkY - dir.y*2);
+  ctx.stroke();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, SIZE, SIZE);
+
+  // grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 0.5;
+  for (var i = 0; i <= GRID; i++) {
+    ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,SIZE); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(SIZE,i*CELL); ctx.stroke();
+  }
+
+  // regular food
+  ctx.fillStyle = '#e94560';
+  ctx.shadowColor = '#e94560';
+  ctx.shadowBlur = 10;
+  ctx.beginPath();
+  ctx.arc(food.x*CELL+CELL/2, food.y*CELL+CELL/2, CELL/2-2, 0, Math.PI*2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // big food
+  if (bigFood) {
+    var elapsed = Date.now() - bigFood.born;
+    var remaining = Math.max(0, BIG_FOOD_LIFE - elapsed);
+    var ratio = remaining / BIG_FOOD_LIFE;
+    var radius = (CELL/2 - 2) * (0.4 + 0.6 * ratio);
+    var value = Math.floor(BIG_FOOD_MIN + (BIG_FOOD_MAX - BIG_FOOD_MIN) * ratio);
+    var fcx = bigFood.x*CELL+CELL/2;
+    var fcy = bigFood.y*CELL+CELL/2;
+
+    ctx.shadowColor = '#ffd700';
+    ctx.shadowBlur = 10 + 10*ratio;
+    var pulse = 1 + 0.1*Math.sin(Date.now()/200);
+    ctx.strokeStyle = 'rgba(255,215,0,'+(0.3+0.5*ratio)+')';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(fcx, fcy, (radius+4)*pulse, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,215,0,'+(0.5+0.5*ratio)+')';
+    ctx.beginPath();
+    ctx.arc(fcx, fcy, radius, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold '+Math.floor(10+4*ratio)+'px "PingFang SC","Segoe UI",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('+'+value, fcx, fcy);
+  }
+
+  // snake
+  drawSnake();
+
+  // game over
+  if (gameOver) {
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillRect(0,0,SIZE,SIZE);
+    ctx.fillStyle = '#eee';
+    ctx.font = 'bold 28px "PingFang SC","Segoe UI",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('游戏结束', SIZE/2, SIZE/2-10);
+    ctx.font = '16px "PingFang SC","Segoe UI",sans-serif';
+    ctx.fillStyle = '#aaa';
+    ctx.fillText('空格键重新开始', SIZE/2, SIZE/2+25);
+  }
+}
+
+// ---- Update ----
+function update() {
+  if (gameOver) return;
+  direction = nextDirection;
+
+  var head = snake[snake.length-1];
+  var newHead = { x: head.x+direction.x, y: head.y+direction.y };
+
+  if (newHead.x < 0 || newHead.x >= GRID || newHead.y < 0 || newHead.y >= GRID) {
+    endGame(); return;
+  }
+
+  var eating = newHead.x === food.x && newHead.y === food.y;
+  var eatingBig = bigFood && newHead.x === bigFood.x && newHead.y === bigFood.y;
+
+  snake.push(newHead);
+  if (!eating && !eatingBig) snake.shift();
+
+  var h = snake[snake.length-1];
+  if (snake.slice(1,-1).some(function(s){ return s.x===h.x && s.y===h.y; })) {
+    endGame(); return;
+  }
+
+  if (eating) {
+    score += 10;
+    scoreEl.textContent = score;
+    eatCount++;
+    progressEl.textContent = eatCount+'/5';
+    if (eatCount >= 5) {
+      eatCount = 0;
+      progressEl.textContent = '0/5';
+      spawnBigFood();
+    }
+    spawnFood();
+  }
+
+  if (eatingBig) {
+    var el = Date.now() - bigFood.born;
+    var rm = Math.max(0, BIG_FOOD_LIFE - el);
+    var rt = rm / BIG_FOOD_LIFE;
+    score += Math.floor(BIG_FOOD_MIN + (BIG_FOOD_MAX-BIG_FOOD_MIN)*rt);
+    scoreEl.textContent = score;
+    bigFood = null;
+  }
+
+  if (bigFood && Date.now()-bigFood.born >= BIG_FOOD_LIFE) {
+    bigFood = null;
+  }
+
+  if (score > best) {
+    best = score;
+    bestEl.textContent = best;
+    localStorage.setItem('snakeBest', best);
+  }
+
+  draw();
+}
+
+function endGame() {
+  gameOver = true;
+  if (score > 0) {
+    var result = addScore(score);
+    renderLB(result.newEntry);
+  }
+  draw();
+}
+
+function loop() {
+  update();
+  gameLoop = setTimeout(function(){ requestAnimationFrame(loop); }, 130);
+}
+
+// ---- Input ----
+document.addEventListener('keydown', function(e) {
+  if (e.code === 'Space') {
+    e.preventDefault();
+    clearTimeout(gameLoop);
+    init();
+    draw();
+    loop();
+    return;
+  }
+  if (gameOver) return;
+  var map = {
+    ArrowUp: DIR.UP, ArrowDown: DIR.DOWN,
+    ArrowLeft: DIR.LEFT, ArrowRight: DIR.RIGHT,
+    KeyW: DIR.UP, KeyS: DIR.DOWN, KeyA: DIR.LEFT, KeyD: DIR.RIGHT,
+  };
+  var dir = map[e.code];
+  if (!dir) return;
+  e.preventDefault();
+  if (dir.x+direction.x === 0 && dir.y+direction.y === 0) return;
+  nextDirection = dir;
+});
+
+document.getElementById('restart').addEventListener('click', function() {
+  clearTimeout(gameLoop);
+  init();
+  draw();
+  loop();
+});
+
+renderLB();
+init();
+draw();
+loop();
+</script>
+</body>
+</html>
