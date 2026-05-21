@@ -144,7 +144,7 @@ var PREMIUM_SKINS={
 var POWERUP_TYPES=[
   {id:'speed',icon:'⚡',color:'#ffff00',name:'加速',dur:5000},
   {id:'shrink',icon:'✂️',color:'#ff44ff',name:'缩小',dur:0},
-  {id:'ghost',icon:'👻',color:'#00ffff',name:'穿墙',dur:5000},
+  {id:'ghost',icon:'👻',color:'#00ffff',name:'穿障',dur:5000},
   {id:'shield',icon:'🛡️',color:'#ffffff',name:'护盾',dur:5000},
 ];
 
@@ -382,7 +382,7 @@ function spawnPowerup(){if(powerup)return;var pos=randomFreePos();if(!pos)return
 // ---- Effect tags ----
 function renderEffects(){
   var tags=[];
-  function ae(effs,p){var n=Date.now();if(effs.speed>n)tags.push({c:'#ffff00',t:p+'加速 '+Math.ceil((effs.speed-n)/1000)+'s'});if(effs.ghost>n)tags.push({c:'#00ffff',t:p+'穿墙 '+Math.ceil((effs.ghost-n)/1000)+'s'});if(effs.shield>n)tags.push({c:'#ffffff',t:p+'护盾 '+Math.ceil((effs.shield-n)/1000)+'s'})}
+  function ae(effs,p){var n=Date.now();if(effs.speed>n)tags.push({c:'#ffff00',t:p+'加速 '+Math.ceil((effs.speed-n)/1000)+'s'});if(effs.ghost>n)tags.push({c:'#00ffff',t:p+'穿障 '+Math.ceil((effs.ghost-n)/1000)+'s'});if(effs.shield>n)tags.push({c:'#ffffff',t:p+'护盾 '+Math.ceil((effs.shield-n)/1000)+'s'})}
   if(mode==='single')ae(effects,'');else{if(alive1)ae(effects1,'P1 ');if(alive2)ae(effects2,'P2 ')}
   effectsBar.innerHTML=tags.map(function(t){return'<span class="effect-tag" style="background:'+t.c+'33;border:1px solid '+t.c+'">'+t.t+'</span>'}).join('');
 }
@@ -581,7 +581,7 @@ function applyPw(effRef,type,snakeRef){
   var now=Date.now();
   switch(type.id){
     case'speed':effRef.speed=now+type.dur;showToast('⚡ 加速！'+type.dur/1000+'s');break;
-    case'ghost':effRef.ghost=now+type.dur;showToast('👻 穿墙！'+type.dur/1000+'s');break;
+    case'ghost':effRef.ghost=now+type.dur;showToast('👻 穿障！'+type.dur/1000+'s');break;
     case'shield':effRef.shield=now+type.dur;showToast('🛡️ 护盾！'+type.dur/1000+'s');break;
     case'shrink':var nl=Math.max(2,Math.floor(snakeRef.length/2));snakeRef.splice(0,snakeRef.length-nl);showToast('✂️ 蛇身减半！');break;
   }
@@ -595,8 +595,8 @@ function update(){if(mode==='single')upSingle();else upDual();draw()}
 function upSingle(){
   if(gameOver)return;direction=nextDirection;
   var hd=snake[snake.length-1],nh={x:hd.x+direction.x,y:hd.y+direction.y};
-  if(!isInvincible(effects)&&chkWall(nh.x,nh.y)){endSingle();return}
-  if(hasEff(effects,'ghost')){nh.x=((nh.x%GRID)+GRID)%GRID;nh.y=((nh.y%GRID)+GRID)%GRID}
+  // always wrap around walls
+  nh.x=((nh.x%GRID)+GRID)%GRID;nh.y=((nh.y%GRID)+GRID)%GRID
   if(!isInvincible(effects)&&hitObs(nh)){endSingle();return}
   var efood=food&&nh.x===food.x&&nh.y===food.y;
   var ebig=bigFood&&nh.x===bigFood.x&&nh.y===bigFood.y;
@@ -619,8 +619,7 @@ function upDual(){
     if(!p.alive)return;
     p.direction=p.nextDir;
     var hd=p.snake[p.snake.length-1],nh={x:hd.x+p.direction.x,y:hd.y+p.direction.y};
-    if(!isInvincible(p.effects)&&chkWall(nh.x,nh.y)){p.alive=false;p.snake=[];return}
-    if(hasEff(p.effects,'ghost')){nh.x=((nh.x%GRID)+GRID)%GRID;nh.y=((nh.y%GRID)+GRID)%GRID}
+    nh.x=((nh.x%GRID)+GRID)%GRID;nh.y=((nh.y%GRID)+GRID)%GRID
     if(!isInvincible(p.effects)&&hitObs(nh)){p.alive=false;p.snake=[];return}
     var ef=food&&nh.x===food.x&&nh.y===food.y;
     var eb=bigFood&&nh.x===bigFood.x&&nh.y===bigFood.y;
