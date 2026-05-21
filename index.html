@@ -16,37 +16,46 @@
     user-select: none;
     padding: 20px;
   }
-  .wrapper {
-    display: flex;
-    gap: 24px;
-    align-items: flex-start;
-  }
+  .wrapper { display: flex; gap: 24px; align-items: flex-start; }
   .game-container { text-align: center; }
   .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    padding: 0 4px;
-    gap: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px; padding: 0 4px; gap: 8px; flex-wrap: wrap;
   }
   .score-box {
-    background: #16213e;
-    color: #eee;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 14px;
-    white-space: nowrap;
+    background: #16213e; color: #eee; padding: 8px 14px;
+    border-radius: 8px; font-size: 13px; white-space: nowrap;
   }
-  .score-box span { color: #0f0; font-weight: bold; font-size: 18px; }
+  .score-box span { font-weight: bold; font-size: 18px; }
+  .score-box .val { color: #0f0; }
   #progress { color: #ffd700 !important; }
+  #crowns { color: #ffd700 !important; }
   canvas {
-    border: 2px solid #0f3460;
-    border-radius: 4px;
-    background: #16213e;
-    display: block;
+    border: 2px solid #0f3460; border-radius: 4px;
+    background: #16213e; display: block;
   }
-  .hint { color: #666; margin-top: 12px; font-size: 13px; }
+  .hint { color: #666; margin-top: 10px; font-size: 13px; }
+
+  /* Skin selector */
+  .skin-bar {
+    display: flex; justify-content: center; gap: 10px;
+    margin-top: 10px; flex-wrap: wrap;
+  }
+  .skin-dot {
+    width: 38px; height: 38px; border-radius: 50%;
+    cursor: pointer; position: relative;
+    border: 3px solid transparent; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .skin-dot:hover { transform: scale(1.15); }
+  .skin-dot.active { border-color: #fff; box-shadow: 0 0 12px rgba(255,255,255,0.4); }
+  .skin-dot.locked { opacity: 0.5; cursor: pointer; }
+  .skin-dot .lock { font-size: 12px; }
+  .skin-tip {
+    color: #888; font-size: 12px; margin-top: 4px;
+  }
+
   button {
     margin-top: 8px; padding: 10px 30px; font-size: 16px;
     border: none; border-radius: 8px; cursor: pointer;
@@ -56,62 +65,78 @@
 
   /* Leaderboard */
   .leaderboard {
-    background: #16213e;
-    border: 2px solid #0f3460;
-    border-radius: 8px;
-    padding: 16px;
-    min-width: 200px;
-    max-height: 520px;
-    overflow-y: auto;
+    background: #16213e; border: 2px solid #0f3460;
+    border-radius: 8px; padding: 16px; min-width: 200px; max-height: 520px; overflow-y: auto;
   }
-  .leaderboard h3 {
-    color: #ffd700;
-    text-align: center;
-    margin-bottom: 12px;
-    font-size: 18px;
-    border-bottom: 1px solid #0f3460;
-    padding-bottom: 8px;
-  }
-  .leaderboard ol {
-    list-style: none;
-    padding: 0;
-  }
-  .leaderboard li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 8px;
-    border-radius: 4px;
-    color: #ccc;
-    font-size: 14px;
-    gap: 12px;
-  }
+  .leaderboard h3 { color: #ffd700; text-align: center; margin-bottom: 12px; font-size: 18px; border-bottom: 1px solid #0f3460; padding-bottom: 8px; }
+  .leaderboard ol { list-style: none; padding: 0; }
+  .leaderboard li { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; border-radius: 4px; color: #ccc; font-size: 14px; gap: 12px; }
   .leaderboard li:nth-child(1) { color: #ffd700; font-weight: bold; }
   .leaderboard li:nth-child(2) { color: #c0c0c0; }
   .leaderboard li:nth-child(3) { color: #cd7f32; }
-  .leaderboard li.highlight {
-    background: rgba(255,215,0,0.1);
-    animation: flash 0.5s ease-in-out 3;
-  }
-  @keyframes flash {
-    50% { background: rgba(255,215,0,0.25); }
-  }
+  .leaderboard li.highlight { background: rgba(255,215,0,0.1); animation: flash 0.5s ease-in-out 3; }
+  @keyframes flash { 50% { background: rgba(255,215,0,0.25); } }
   .leaderboard .rank { width: 24px; text-align: center; }
   .leaderboard .score { color: #0f0; font-weight: bold; min-width: 40px; text-align: right; }
   .leaderboard .date { color: #888; font-size: 11px; }
   .leaderboard .empty { color: #555; text-align: center; padding: 20px 0; font-size: 14px; }
+
+  /* Crown toast */
+  .crown-toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: #2a1a0e; color: #ffd700; padding: 12px 28px;
+    border-radius: 12px; font-size: 20px; font-weight: bold;
+    border: 2px solid #ffd700; z-index: 100;
+    opacity: 0; transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .crown-toast.show { opacity: 1; animation: crownPop 0.5s ease-out; }
+  @keyframes crownPop {
+    0% { transform: translateX(-50%) scale(0.5); }
+    50% { transform: translateX(-50%) scale(1.2); }
+    100% { transform: translateX(-50%) scale(1); }
+  }
+
+  /* Unlock modal */
+  .modal-overlay {
+    position: fixed; top:0;left:0;right:0;bottom:0;
+    background: rgba(0,0,0,0.7); z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal {
+    background: #16213e; border: 2px solid #ffd700; border-radius: 16px;
+    padding: 24px; text-align: center; color: #eee; max-width: 340px;
+  }
+  .modal h3 { color: #ffd700; margin-bottom: 12px; }
+  .modal .skin-preview {
+    width: 60px; height: 60px; border-radius: 50%; margin: 12px auto;
+    border: 3px solid #fff; box-shadow: 0 0 15px rgba(255,255,255,0.3);
+  }
+  .modal button {
+    margin: 8px 6px 0;
+  }
+  .modal .cancel { background: #444; }
+  .modal .cancel:hover { background: #666; }
+
+  @media (max-width: 700px) {
+    .wrapper { flex-direction: column; align-items: center; }
+  }
 </style>
 </head>
 <body>
+<div class="crown-toast" id="toast"></div>
+
 <div class="wrapper">
   <div class="game-container">
     <div class="header">
-      <div class="score-box">得分 <span id="score">0</span></div>
+      <div class="score-box">得分 <span class="val" id="score">0</span></div>
       <div class="score-box">大球 <span id="progress">0/5</span></div>
-      <div class="score-box">最高分 <span id="best">0</span></div>
+      <div class="score-box">👑 <span id="crowns">0</span></div>
+      <div class="score-box">最高分 <span class="val" id="best">0</span></div>
     </div>
     <canvas id="canvas"></canvas>
-    <p class="hint">方向键 ↑↓←→ 控制移动 | 空格键重新开始</p>
+    <div class="skin-bar" id="skinBar"></div>
+    <p class="hint">方向键 ↑↓←→ 控制 | 空格键重新开始</p>
     <button id="restart">重新开始</button>
   </div>
   <div class="leaderboard" id="leaderboard">
@@ -120,48 +145,138 @@
 </div>
 
 <script>
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-const scoreEl = document.getElementById('score');
-const bestEl = document.getElementById('best');
-const progressEl = document.getElementById('progress');
-const lbEl = document.getElementById('leaderboard');
+var canvas = document.getElementById('canvas');
+var ctx = canvas.getContext('2d');
+var scoreEl = document.getElementById('score');
+var bestEl = document.getElementById('best');
+var progressEl = document.getElementById('progress');
+var crownsEl = document.getElementById('crowns');
+var lbEl = document.getElementById('leaderboard');
+var toast = document.getElementById('toast');
 
-const GRID = 20;
-const CELL = 25;
-const SIZE = GRID * CELL;
+var GRID = 20;
+var CELL = 25;
+var SIZE = GRID * CELL;
 canvas.width = SIZE;
 canvas.height = SIZE;
 
-const DIR = { UP: {x:0,y:-1}, DOWN: {x:0,y:1}, LEFT: {x:-1,y:0}, RIGHT: {x:1,y:0} };
-const BIG_FOOD_LIFE = 5000;
-const BIG_FOOD_MAX = 50;
-const BIG_FOOD_MIN = 10;
+var DIR = { UP: {x:0,y:-1}, DOWN: {x:0,y:1}, LEFT: {x:-1,y:0}, RIGHT: {x:1,y:0} };
+var BIG_FOOD_LIFE = 5000;
+var BIG_FOOD_MAX = 50;
+var BIG_FOOD_MIN = 10;
+var CROWN_EVERY = 50; // 每 50 分获得一个王冠
+var UNLOCK_COST = 3;  // 解锁皮肤需要 3 个王冠
 
-let snake, food, bigFood, direction, nextDirection, score, best, gameOver, gameLoop, eatCount;
+// ---- Skins ----
+var SKINS = {
+  '经典绿': {
+    name: '经典绿',
+    tailR: 20, tailG: 100, tailB: 20,
+    headR: 80, headG: 220, headB: 50,
+    headOverride: 'rgb(80,220,50)',
+    tongue: '#e94560',
+    dotBg: 'linear-gradient(135deg, #146614, #50dc32)',
+    unlocked: true
+  },
+  '烈焰红': {
+    name: '烈焰红',
+    tailR: 160, tailG: 30, tailB: 10,
+    headR: 255, headG: 80, headB: 20,
+    headOverride: 'rgb(255,80,20)',
+    tongue: '#ff6633',
+    dotBg: 'linear-gradient(135deg, #8b1a1a, #ff4422)',
+    unlocked: false
+  },
+  '深海蓝': {
+    name: '深海蓝',
+    tailR: 10, tailG: 60, tailB: 140,
+    headR: 30, headG: 180, headB: 255,
+    headOverride: 'rgb(30,200,255)',
+    tongue: '#44ccff',
+    dotBg: 'linear-gradient(135deg, #0a3c8c, #30b4ff)',
+    unlocked: false
+  },
+  '暗夜紫': {
+    name: '暗夜紫',
+    tailR: 50, tailG: 10, tailB: 80,
+    headR: 180, headG: 50, headB: 220,
+    headOverride: 'rgb(180,50,220)',
+    tongue: '#cc66ff',
+    dotBg: 'linear-gradient(135deg, #3a1a6e, #b464ff)',
+    unlocked: false
+  },
+  '黄金蛇': {
+    name: '黄金蛇',
+    tailR: 120, tailG: 90, tailB: 10,
+    headR: 255, headG: 215, headB: 0,
+    headOverride: 'rgb(255,215,0)',
+    tongue: '#ffaa00',
+    dotBg: 'linear-gradient(135deg, #7a5a00, #ffd700)',
+    unlocked: false
+  },
+  '彩虹蛇': {
+    name: '彩虹蛇',
+    rainbow: true,
+    headOverride: 'rgb(255,100,100)',
+    tongue: '#ff6699',
+    dotBg: 'linear-gradient(135deg, red, orange, yellow, green, blue, purple)',
+    unlocked: false
+  }
+};
 
-best = parseInt(localStorage.getItem('snakeBest')) || 0;
-bestEl.textContent = best;
+// ---- Persistence ----
+function loadData() {
+  try { return JSON.parse(localStorage.getItem('snakeData')) || {}; } catch(e) { return {}; }
+}
+function saveData(d) { localStorage.setItem('snakeData', JSON.stringify(d)); }
+
+function getCrowns() { return loadData().crowns || 0; }
+function addCrowns(n) {
+  var d = loadData();
+  d.crowns = (d.crowns || 0) + n;
+  saveData(d);
+  crownsEl.textContent = d.crowns;
+}
+function spendCrowns(n) {
+  var d = loadData();
+  d.crowns = Math.max(0, (d.crowns || 0) - n);
+  saveData(d);
+  crownsEl.textContent = d.crowns;
+}
+
+function getUnlocked() {
+  var u = loadData().unlocked || [];
+  if (u.length === 0) u = ['经典绿'];
+  return u;
+}
+function unlockSkin(name) {
+  var d = loadData();
+  var u = d.unlocked || ['经典绿'];
+  if (u.indexOf(name) === -1) u.push(name);
+  d.unlocked = u;
+  saveData(d);
+}
+function getActiveSkin() { return loadData().activeSkin || '经典绿'; }
+function setActiveSkin(name) {
+  var d = loadData();
+  d.activeSkin = name;
+  saveData(d);
+}
 
 // ---- Leaderboard ----
 function loadLB() {
-  try { return JSON.parse(localStorage.getItem('snakeLB')) || []; }
-  catch(e) { return []; }
+  try { return JSON.parse(localStorage.getItem('snakeLB')) || []; } catch(e) { return []; }
 }
 function saveLB(data) { localStorage.setItem('snakeLB', JSON.stringify(data)); }
-
 function addScore(s) {
   var lb = loadLB();
   var entry = { score: s, date: new Date().toLocaleDateString('zh-CN') };
   lb.push(entry);
-  lb.sort(function(a,b) { return b.score - a.score; });
+  lb.sort(function(a,b){ return b.score - a.score; });
   lb = lb.slice(0, 10);
   saveLB(lb);
   return { list: lb, newEntry: entry };
 }
-
-function pad(n) { return n < 10 ? '0' + n : '' + n; }
-
 function renderLB(highlightEntry) {
   var lb = loadLB();
   var h = '<h3>排行榜</h3>';
@@ -171,11 +286,9 @@ function renderLB(highlightEntry) {
     h += '<ol>';
     for (var i = 0; i < lb.length; i++) {
       var cls = '';
-      if (highlightEntry && lb[i].score === highlightEntry.score && lb[i].date === highlightEntry.date) {
-        cls = ' highlight';
-      }
+      if (highlightEntry && lb[i].score === highlightEntry.score && lb[i].date === highlightEntry.date) cls = ' highlight';
       h += '<li class="' + cls + '">';
-      h += '<span class="rank">' + (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)) + '</span>';
+      h += '<span class="rank">' + (i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)) + '</span>';
       h += '<span class="score">' + lb[i].score + '</span>';
       h += '<span class="date">' + lb[i].date + '</span>';
       h += '</li>';
@@ -185,10 +298,98 @@ function renderLB(highlightEntry) {
   lbEl.innerHTML = h;
 }
 
+// ---- Skin UI ----
+function buildSkinBar() {
+  var unlocked = getUnlocked();
+  var active = getActiveSkin();
+  var crowns = getCrowns();
+  var bar = document.getElementById('skinBar');
+  var html = '';
+  var names = Object.keys(SKINS);
+  for (var i = 0; i < names.length; i++) {
+    var name = names[i];
+    var skin = SKINS[name];
+    var isUnlocked = unlocked.indexOf(name) !== -1;
+    var isActive = name === active;
+    var cls = 'skin-dot';
+    if (isActive) cls += ' active';
+    if (!isUnlocked) cls += ' locked';
+    var inner = '';
+    if (!isUnlocked) {
+      inner = '<span class="lock">🔒</span>';
+    }
+    html += '<div class="' + cls + '" data-skin="' + name + '" style="background:' + skin.dotBg + '">' + inner + '</div>';
+  }
+  bar.innerHTML = html;
+}
+
+document.getElementById('skinBar').addEventListener('click', function(e) {
+  var dot = e.target.closest('.skin-dot');
+  if (!dot) return;
+  var name = dot.getAttribute('data-skin');
+  var unlocked = getUnlocked();
+  if (unlocked.indexOf(name) !== -1) {
+    setActiveSkin(name);
+    buildSkinBar();
+  } else {
+    showUnlockModal(name);
+  }
+});
+
+function showUnlockModal(name) {
+  var crowns = getCrowns();
+  var skin = SKINS[name];
+  // remove existing
+  var existing = document.querySelector('.modal-overlay');
+  if (existing) existing.remove();
+
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML =
+    '<div class="modal">' +
+    '<h3>解锁皮肤：' + name + '</h3>' +
+    '<div class="skin-preview" style="background:' + skin.dotBg + '"></div>' +
+    '<p style="margin:8px 0">消耗 👑×' + UNLOCK_COST + ' 解锁此皮肤</p>' +
+    '<p style="color:' + (crowns >= UNLOCK_COST ? '#ffd700' : '#e94560') + ';font-size:14px">当前拥有：👑×' + crowns + '</p>' +
+    '<button id="btnUnlock"' + (crowns >= UNLOCK_COST ? '' : ' disabled style="opacity:0.4"') + '>解锁</button>' +
+    '<button class="cancel" id="btnCancel">取消</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('#btnCancel').onclick = function() { overlay.remove(); };
+  overlay.querySelector('#btnUnlock').onclick = function() {
+    if (getCrowns() >= UNLOCK_COST) {
+      spendCrowns(UNLOCK_COST);
+      unlockSkin(name);
+      setActiveSkin(name);
+      buildSkinBar();
+      overlay.remove();
+    }
+  };
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+}
+
+// ---- Toast ----
+var toastTimer = null;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.remove('show');
+  void toast.offsetWidth;
+  toast.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { toast.classList.remove('show'); }, 2000);
+}
+
+// ---- Game State ----
+var snake, food, bigFood, direction, nextDirection, score, gameOver, gameLoop, eatCount, crownMilestone, earnedCrowns;
+var best = parseInt(localStorage.getItem('snakeBest')) || 0;
+bestEl.textContent = best;
+crownsEl.textContent = getCrowns();
+
 function init() {
-  var cx = Math.floor(GRID / 2);
+  var cx = Math.floor(GRID/2);
   snake = [
-    {x: cx,   y: cx},
+    {x: cx, y: cx},
     {x: cx-1, y: cx},
     {x: cx-2, y: cx},
   ];
@@ -198,174 +399,210 @@ function init() {
   gameOver = false;
   bigFood = null;
   eatCount = 0;
+  earnedCrowns = 0;
+  crownMilestone = CROWN_EVERY;
   scoreEl.textContent = '0';
   progressEl.textContent = '0/5';
   spawnFood();
 }
 
 function randomFreePos(extra) {
-  var occupied = new Set(snake.map(function(s) { return s.x + ',' + s.y; }));
-  if (food) occupied.add(food.x + ',' + food.y);
-  if (extra) occupied.add(extra.x + ',' + extra.y);
+  var occupied = new Set(snake.map(function(s){ return s.x+','+s.y; }));
+  if (food) occupied.add(food.x+','+food.y);
+  if (extra) occupied.add(extra.x+','+extra.y);
   var free = [];
-  for (var x = 0; x < GRID; x++)
-    for (var y = 0; y < GRID; y++)
-      if (!occupied.has(x + ',' + y))
-        free.push({x: x, y: y});
-  if (free.length === 0) return null;
-  return free[Math.floor(Math.random() * free.length)];
+  for (var x=0; x<GRID; x++)
+    for (var y=0; y<GRID; y++)
+      if (!occupied.has(x+','+y)) free.push({x:x,y:y});
+  if (free.length===0) return null;
+  return free[Math.floor(Math.random()*free.length)];
 }
-
 function spawnFood() {
   var pos = randomFreePos(bigFood);
   if (pos) food = pos;
 }
-
 function spawnBigFood() {
   var pos = randomFreePos(null);
-  if (pos) bigFood = { x: pos.x, y: pos.y, born: Date.now() };
+  if (pos) bigFood = { x:pos.x, y:pos.y, born:Date.now() };
 }
 
 // ---- Draw ----
+function getSkinColors() {
+  var name = getActiveSkin();
+  var s = SKINS[name] || SKINS['经典绿'];
+  if (s.rainbow) {
+    // rainbow: use time-based HSL
+    return {
+      rainbow: true,
+      headOverride: s.headOverride,
+      tongue: s.tongue
+    };
+  }
+  return {
+    tailR: s.tailR, tailG: s.tailG, tailB: s.tailB,
+    headR: s.headR, headG: s.headG, headB: s.headB,
+    headOverride: s.headOverride,
+    tongue: s.tongue
+  };
+}
+
 function drawSnake() {
   var len = snake.length;
   if (len === 0) return;
+  var colors = getSkinColors();
+  var isRainbow = colors.rainbow;
+  var now = Date.now();
 
-  // Draw body from tail to head (head draws on top)
+  // Draw body segments
   for (var j = 0; j < len; j++) {
-    var s = snake[j];
-    var cx = s.x * CELL + CELL/2;
-    var cy = s.y * CELL + CELL/2;
-    var isHead = (j === len - 1);
+    var seg = snake[j];
+    var cx = seg.x*CELL + CELL/2;
+    var cy = seg.y*CELL + CELL/2;
+    var isHead = (j === len-1);
     var isTail = (j === 0);
+    var t = j / Math.max(len-1, 1);
 
-    // color gradient: tail dark green → head bright green
-    var t = j / Math.max(len - 1, 1);
-    var R = Math.floor(20 + 90 * t);
-    var G = Math.floor(100 + 155 * t);
-    var B = Math.floor(20 + 30 * t);
+    var R, G, B;
+    if (isRainbow) {
+      var hue = (j * 30 + now/50) % 360;
+      var rgb = hslToRgb(hue/360, 0.8, 0.5 + 0.3*t);
+      R = rgb[0]; G = rgb[1]; B = rgb[2];
+    } else {
+      R = Math.floor(colors.tailR + (colors.headR - colors.tailR)*t);
+      G = Math.floor(colors.tailG + (colors.headG - colors.tailG)*t);
+      B = Math.floor(colors.tailB + (colors.headB - colors.tailB)*t);
+    }
 
-    var r = isHead ? CELL/2 - 2 : (isTail ? CELL/3 : CELL/2.4);
+    var r = isHead ? CELL/2-2 : (isTail ? CELL/3 : CELL/2.4);
 
-    // body segment
-    ctx.fillStyle = 'rgb(' + R + ',' + G + ',' + B + ')';
+    ctx.fillStyle = 'rgb('+R+','+G+','+B+')';
     ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.arc(cx, cy, r, 0, Math.PI*2);
     ctx.fill();
 
     // belly highlight
-    ctx.fillStyle = 'rgba(255,255,255,' + (0.08 + 0.07 * t) + ')';
+    ctx.fillStyle = 'rgba(255,255,255,'+(0.08+0.07*t)+')';
     ctx.beginPath();
-    ctx.arc(cx - 2, cy - r*0.3, r * 0.55, 0, Math.PI * 2);
+    ctx.arc(cx-2, cy-r*0.3, r*0.55, 0, Math.PI*2);
     ctx.fill();
   }
 
-  // Connect adjacent segments with thick lines for smooth body
+  // Connect segments
   ctx.lineCap = 'round';
-  for (var k = 0; k < len - 1; k++) {
-    var a = snake[k];
-    var b = snake[k + 1];
-    var ax = a.x * CELL + CELL/2;
-    var ay = a.y * CELL + CELL/2;
-    var bx = b.x * CELL + CELL/2;
-    var by = b.y * CELL + CELL/2;
-    var tk = k / Math.max(len - 1, 1);
-    var RR = Math.floor(20 + 90 * tk);
-    var GG = Math.floor(100 + 155 * tk);
-    var BB = Math.floor(20 + 30 * tk);
+  for (var k = 0; k < len-1; k++) {
+    var a = snake[k], b = snake[k+1];
+    var ax = a.x*CELL+CELL/2, ay = a.y*CELL+CELL/2;
+    var bx = b.x*CELL+CELL/2, by = b.y*CELL+CELL/2;
+    var tk = k / Math.max(len-1, 1);
 
-    ctx.strokeStyle = 'rgb(' + RR + ',' + GG + ',' + BB + ')';
-    ctx.lineWidth = CELL * 0.78;
+    var RR, GG, BB;
+    if (isRainbow) {
+      var h2 = (k*30 + now/50) % 360;
+      var rgb2 = hslToRgb(h2/360, 0.8, 0.5+0.3*tk);
+      RR = rgb2[0]; GG = rgb2[1]; BB = rgb2[2];
+    } else {
+      RR = Math.floor(colors.tailR + (colors.headR-colors.tailR)*tk);
+      GG = Math.floor(colors.tailG + (colors.headG-colors.tailG)*tk);
+      BB = Math.floor(colors.tailB + (colors.headB-colors.tailB)*tk);
+    }
+
+    ctx.strokeStyle = 'rgb('+RR+','+GG+','+BB+')';
+    ctx.lineWidth = CELL*0.78;
     ctx.beginPath();
     ctx.moveTo(ax, ay);
     ctx.lineTo(bx, by);
     ctx.stroke();
 
-    // lighter center line
     ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-    ctx.lineWidth = CELL * 0.3;
+    ctx.lineWidth = CELL*0.3;
     ctx.beginPath();
     ctx.moveTo(ax, ay);
     ctx.lineTo(bx, by);
     ctx.stroke();
   }
 
-  // Redraw head on top
-  var head = snake[len - 1];
-  var hx = head.x * CELL + CELL/2;
-  var hy = head.y * CELL + CELL/2;
-
-  // head slightly wider
-  ctx.fillStyle = 'rgb(80,220,50)';
+  // Head
+  var head = snake[len-1];
+  var hx = head.x*CELL+CELL/2, hy = head.y*CELL+CELL/2;
+  var headColor = colors.headOverride;
+  ctx.fillStyle = headColor;
   ctx.beginPath();
-  ctx.ellipse(hx, hy, CELL/2 - 1, CELL/2 - 3, 0, 0, Math.PI * 2);
+  ctx.ellipse(hx, hy, CELL/2-1, CELL/2-3, 0, 0, Math.PI*2);
   ctx.fill();
 
-  // eyes
-  var eyeOffX = 0, eyeOffY = 0;
+  // Eyes
   var dir = direction;
-  if (dir.x === 1) { eyeOffX = 4; eyeOffY = 0; }
-  else if (dir.x === -1) { eyeOffX = -4; eyeOffY = 0; }
-  else if (dir.y === -1) { eyeOffX = 0; eyeOffY = -4; }
-  else if (dir.y === 1) { eyeOffX = 0; eyeOffY = 4; }
+  var eyeOffX=0, eyeOffY=0;
+  if (dir.x===1) { eyeOffX=4; eyeOffY=0; }
+  else if (dir.x===-1) { eyeOffX=-4; eyeOffY=0; }
+  else if (dir.y===-1) { eyeOffX=0; eyeOffY=-4; }
+  else if (dir.y===1) { eyeOffX=0; eyeOffY=4; }
+  var perpX = dir.y*5, perpY = dir.x*5;
 
-  var perpX = dir.y * 5;
-  var perpY = dir.x * 5;
+  for (var side=-1; side<=1; side+=2) {
+    var ex = hx + eyeOffX + perpX*side;
+    var ey = hy + eyeOffY + perpY*side;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(ex, ey, 4, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#111';
+    ctx.beginPath();
+    ctx.arc(ex + dir.x*1.5, ey + dir.y*1.5, 2, 0, Math.PI*2);
+    ctx.fill();
+  }
 
-  // left eye
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.arc(hx + eyeOffX + perpX, hy + eyeOffY + perpY, 4, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#111';
-  ctx.beginPath();
-  ctx.arc(hx + eyeOffX + perpX + dir.x*1.5, hy + eyeOffY + perpY + dir.y*1.5, 2, 0, Math.PI * 2);
-  ctx.fill();
-
-  // right eye
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.arc(hx + eyeOffX - perpX, hy + eyeOffY - perpY, 4, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#111';
-  ctx.beginPath();
-  ctx.arc(hx + eyeOffX - perpX + dir.x*1.5, hy + eyeOffY - perpY + dir.y*1.5, 2, 0, Math.PI * 2);
-  ctx.fill();
-
-  // tongue
-  var tongueLen = 10 + 3 * Math.sin(Date.now() / 150);
-  var tx = hx + dir.x * (CELL/2 + tongueLen);
-  var ty = hy + dir.y * (CELL/2 + tongueLen);
-  ctx.strokeStyle = '#e94560';
+  // Tongue
+  var tongueLen = 10 + 3*Math.sin(now/150);
+  var tx = hx + dir.x*(CELL/2+tongueLen);
+  var ty = hy + dir.y*(CELL/2+tongueLen);
+  ctx.strokeStyle = colors.tongue;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(hx + dir.x * (CELL/2 - 2), hy + dir.y * (CELL/2 - 2));
+  ctx.moveTo(hx+dir.x*(CELL/2-2), hy+dir.y*(CELL/2-2));
   ctx.lineTo(tx, ty);
   ctx.stroke();
-
-  // tongue fork
-  var forkX = dir.y * 3;
-  var forkY = dir.x * 3;
+  var forkX = dir.y*3, forkY = dir.x*3;
   ctx.beginPath();
   ctx.moveTo(tx, ty);
-  ctx.lineTo(tx + forkX - dir.x*2, ty + forkY - dir.y*2);
+  ctx.lineTo(tx+forkX-dir.x*2, ty+forkY-dir.y*2);
   ctx.moveTo(tx, ty);
-  ctx.lineTo(tx - forkX - dir.x*2, ty - forkY - dir.y*2);
+  ctx.lineTo(tx-forkX-dir.x*2, ty-forkY-dir.y*2);
   ctx.stroke();
 }
 
+function hslToRgb(h, s, l) {
+  var r, g, b;
+  if (s===0) { r=g=b=l; }
+  else {
+    var hue2rgb = function(p, q, t) {
+      if (t<0) t+=1; if (t>1) t-=1;
+      if (t<1/6) return p+(q-p)*6*t;
+      if (t<1/2) return q;
+      if (t<2/3) return p+(q-p)*(2/3-t)*6;
+      return p;
+    };
+    var q = l<0.5 ? l*(1+s) : l+s-l*s;
+    var p = 2*l-q;
+    r = hue2rgb(p,q,h+1/3);
+    g = hue2rgb(p,q,h);
+    b = hue2rgb(p,q,h-1/3);
+  }
+  return [Math.floor(r*255), Math.floor(g*255), Math.floor(b*255)];
+}
+
 function draw() {
-  ctx.clearRect(0, 0, SIZE, SIZE);
+  ctx.clearRect(0,0,SIZE,SIZE);
 
   // grid
   ctx.strokeStyle = 'rgba(255,255,255,0.03)';
   ctx.lineWidth = 0.5;
-  for (var i = 0; i <= GRID; i++) {
+  for (var i=0; i<=GRID; i++) {
     ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,SIZE); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(SIZE,i*CELL); ctx.stroke();
   }
 
-  // regular food
+  // food
   ctx.fillStyle = '#e94560';
   ctx.shadowColor = '#e94560';
   ctx.shadowBlur = 10;
@@ -376,17 +613,15 @@ function draw() {
 
   // big food
   if (bigFood) {
-    var elapsed = Date.now() - bigFood.born;
-    var remaining = Math.max(0, BIG_FOOD_LIFE - elapsed);
-    var ratio = remaining / BIG_FOOD_LIFE;
-    var radius = (CELL/2 - 2) * (0.4 + 0.6 * ratio);
-    var value = Math.floor(BIG_FOOD_MIN + (BIG_FOOD_MAX - BIG_FOOD_MIN) * ratio);
-    var fcx = bigFood.x*CELL+CELL/2;
-    var fcy = bigFood.y*CELL+CELL/2;
-
+    var elapsed = Date.now()-bigFood.born;
+    var remaining = Math.max(0, BIG_FOOD_LIFE-elapsed);
+    var ratio = remaining/BIG_FOOD_LIFE;
+    var radius = (CELL/2-2)*(0.4+0.6*ratio);
+    var value = Math.floor(BIG_FOOD_MIN+(BIG_FOOD_MAX-BIG_FOOD_MIN)*ratio);
+    var fcx = bigFood.x*CELL+CELL/2, fcy = bigFood.y*CELL+CELL/2;
     ctx.shadowColor = '#ffd700';
-    ctx.shadowBlur = 10 + 10*ratio;
-    var pulse = 1 + 0.1*Math.sin(Date.now()/200);
+    ctx.shadowBlur = 10+10*ratio;
+    var pulse = 1+0.1*Math.sin(Date.now()/200);
     ctx.strokeStyle = 'rgba(255,215,0,'+(0.3+0.5*ratio)+')';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -404,10 +639,8 @@ function draw() {
     ctx.fillText('+'+value, fcx, fcy);
   }
 
-  // snake
   drawSnake();
 
-  // game over
   if (gameOver) {
     ctx.fillStyle = 'rgba(0,0,0,0.65)';
     ctx.fillRect(0,0,SIZE,SIZE);
@@ -429,46 +662,49 @@ function update() {
   var head = snake[snake.length-1];
   var newHead = { x: head.x+direction.x, y: head.y+direction.y };
 
-  if (newHead.x < 0 || newHead.x >= GRID || newHead.y < 0 || newHead.y >= GRID) {
-    endGame(); return;
-  }
+  if (newHead.x<0 || newHead.x>=GRID || newHead.y<0 || newHead.y>=GRID) { endGame(); return; }
 
-  var eating = newHead.x === food.x && newHead.y === food.y;
-  var eatingBig = bigFood && newHead.x === bigFood.x && newHead.y === bigFood.y;
+  var eating = newHead.x===food.x && newHead.y===food.y;
+  var eatingBig = bigFood && newHead.x===bigFood.x && newHead.y===bigFood.y;
 
   snake.push(newHead);
   if (!eating && !eatingBig) snake.shift();
 
   var h = snake[snake.length-1];
-  if (snake.slice(1,-1).some(function(s){ return s.x===h.x && s.y===h.y; })) {
-    endGame(); return;
-  }
+  if (snake.slice(1,-1).some(function(s){ return s.x===h.x && s.y===h.y; })) { endGame(); return; }
 
   if (eating) {
     score += 10;
     scoreEl.textContent = score;
     eatCount++;
     progressEl.textContent = eatCount+'/5';
-    if (eatCount >= 5) {
-      eatCount = 0;
-      progressEl.textContent = '0/5';
-      spawnBigFood();
-    }
+    if (eatCount >= 5) { eatCount=0; progressEl.textContent='0/5'; spawnBigFood(); }
     spawnFood();
+
+    // crown milestone check
+    if (score >= crownMilestone) {
+      earnedCrowns++;
+      crownMilestone += CROWN_EVERY;
+      showToast('👑 获得王冠！(+' + earnedCrowns + ')');
+    }
   }
 
   if (eatingBig) {
-    var el = Date.now() - bigFood.born;
-    var rm = Math.max(0, BIG_FOOD_LIFE - el);
-    var rt = rm / BIG_FOOD_LIFE;
-    score += Math.floor(BIG_FOOD_MIN + (BIG_FOOD_MAX-BIG_FOOD_MIN)*rt);
+    var el = Date.now()-bigFood.born;
+    var rm = Math.max(0, BIG_FOOD_LIFE-el);
+    score += Math.floor(BIG_FOOD_MIN+(BIG_FOOD_MAX-BIG_FOOD_MIN)*(rm/BIG_FOOD_LIFE));
     scoreEl.textContent = score;
     bigFood = null;
+
+    // crown milestone check (big food might push score over threshold)
+    if (score >= crownMilestone) {
+      earnedCrowns++;
+      crownMilestone += CROWN_EVERY;
+      showToast('👑 获得王冠！(+' + earnedCrowns + ')');
+    }
   }
 
-  if (bigFood && Date.now()-bigFood.born >= BIG_FOOD_LIFE) {
-    bigFood = null;
-  }
+  if (bigFood && Date.now()-bigFood.born >= BIG_FOOD_LIFE) { bigFood = null; }
 
   if (score > best) {
     best = score;
@@ -481,6 +717,10 @@ function update() {
 
 function endGame() {
   gameOver = true;
+  if (earnedCrowns > 0) {
+    addCrowns(earnedCrowns);
+    buildSkinBar();
+  }
   if (score > 0) {
     var result = addScore(score);
     renderLB(result.newEntry);
@@ -512,7 +752,7 @@ document.addEventListener('keydown', function(e) {
   var dir = map[e.code];
   if (!dir) return;
   e.preventDefault();
-  if (dir.x+direction.x === 0 && dir.y+direction.y === 0) return;
+  if (dir.x+direction.x===0 && dir.y+direction.y===0) return;
   nextDirection = dir;
 });
 
@@ -523,7 +763,9 @@ document.getElementById('restart').addEventListener('click', function() {
   loop();
 });
 
+// ---- Init ----
 renderLB();
+buildSkinBar();
 init();
 draw();
 loop();
