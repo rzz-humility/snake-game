@@ -2,490 +2,470 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>贪吃蛇</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: #1a1a2e; display: flex; justify-content: center;
-    align-items: center; min-height: 100vh;
-    font-family: 'Segoe UI', 'PingFang SC', sans-serif; user-select: none; padding: 20px;
-  }
-  .wrapper { display: flex; gap: 24px; align-items: flex-start; }
-  .game-container { text-align: center; }
-  .header {
-    display: flex; justify-content: center; align-items: center;
-    margin-bottom: 10px; gap: 8px; flex-wrap: wrap;
-  }
-  .score-box {
-    background: #16213e; color: #eee; padding: 8px 14px;
-    border-radius: 8px; font-size: 13px; white-space: nowrap;
-  }
-  .score-box span { font-weight: bold; font-size: 18px; }
-  .score-box .val { color: #0f0; }
-  #progress { color: #ffd700 !important; }
-  #crowns { color: #ffd700 !important; }
-  .score-p1 { color: #50dc32 !important; }
-  .score-p2 { color: #30b4ff !important; }
-  canvas {
-    border: 2px solid #0f3460; border-radius: 4px;
-    background: #16213e; display: block;
-  }
-  .control-bar { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
-  .mode-toggle {
-    display: inline-flex; border-radius: 8px; overflow: hidden; border: 2px solid #0f3460;
-  }
-  .mode-toggle button, .opt-btn {
-    margin: 0; padding: 8px 16px; font-size: 13px; border: none;
-    cursor: pointer; background: #16213e; color: #888;
-    border-radius: 0; transition: all 0.2s;
-  }
-  .mode-toggle button.active, .opt-btn.active {
-    background: #0f3460; color: #ffd700; font-weight: bold;
-  }
-  .opt-btn { border-radius: 8px; border: 2px solid #0f3460; }
-  .mode-toggle button:hover, .opt-btn:hover { background: #1a3a6a; color: #eee; }
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a1a2e;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:'Segoe UI','PingFang SC',sans-serif;user-select:none;padding:20px}
+.wrapper{display:flex;gap:24px;align-items:flex-start}
+.game-container{text-align:center}
+.header{display:flex;justify-content:center;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap}
+.score-box{background:#16213e;color:#eee;padding:8px 14px;border-radius:8px;font-size:13px;white-space:nowrap}
+.score-box span{font-weight:bold;font-size:18px}
+.score-box .val{color:#0f0}
+#progress{color:#ffd700!important}
+#crowns{color:#ffd700!important}
+#diamonds{color:#5cf!important}
+.score-p1{color:#50dc32!important}
+.score-p2{color:#30b4ff!important}
+.diamond-box{cursor:pointer;position:relative;transition:all 0.2s}
+.diamond-box:hover{background:#1a2a4e;transform:scale(1.05)}
+.diamond-box .plus{color:#5cf;font-size:12px}
+canvas{border:2px solid #0f3460;border-radius:4px;background:#16213e;display:block}
+.control-bar{display:flex;justify-content:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+.mode-toggle{display:inline-flex;border-radius:8px;overflow:hidden;border:2px solid #0f3460}
+.mode-toggle button,.opt-btn{margin:0;padding:8px 16px;font-size:13px;border:none;cursor:pointer;background:#16213e;color:#888;border-radius:0;transition:all 0.2s}
+.mode-toggle button.active,.opt-btn.active{background:#0f3460;color:#ffd700;font-weight:bold}
+.opt-btn{border-radius:8px;border:2px solid #0f3460}
+.mode-toggle button:hover,.opt-btn:hover{background:#1a3a6a;color:#eee}
 
-  .skin-bar { display: flex; justify-content: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
-  .skin-dot {
-    width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
-    position: relative; border: 3px solid transparent; transition: all 0.2s;
-    display: flex; align-items: center; justify-content: center; font-size: 13px;
-  }
-  .skin-dot:hover { transform: scale(1.15); }
-  .skin-dot.active { border-color: #fff; box-shadow: 0 0 12px rgba(255,255,255,0.4); }
-  .skin-dot.locked { opacity: 0.5; cursor: pointer; }
+.skin-section{margin-top:6px}
+.skin-section-label{color:#888;font-size:11px;margin-bottom:4px}
+.skin-bar{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.skin-dot{width:36px;height:36px;border-radius:50%;cursor:pointer;position:relative;border:3px solid transparent;transition:all 0.2s;display:flex;align-items:center;justify-content:center;font-size:12px}
+.skin-dot:hover{transform:scale(1.15)}
+.skin-dot.active{border-color:#fff;box-shadow:0 0 12px rgba(255,255,255,0.4)}
+.skin-dot.locked{opacity:0.5;cursor:pointer}
+.skin-dot.premium{border-style:dashed;border-color:rgba(100,200,255,0.5)}
+.skin-dot.premium.active{border-color:#5cf;box-shadow:0 0 14px rgba(100,200,255,0.6)}
+.skin-dot .price-tag{position:absolute;bottom:-8px;font-size:9px;color:#5cf;background:#0a0a1e;padding:1px 5px;border-radius:6px;white-space:nowrap}
 
-  .hint { color: #666; margin-top: 8px; font-size: 12px; line-height: 1.6; }
-  button.restart-btn {
-    margin-top: 8px; padding: 10px 30px; font-size: 16px;
-    border: none; border-radius: 8px; cursor: pointer;
-    background: #0f3460; color: #eee; transition: background 0.2s;
-  }
-  button.restart-btn:hover { background: #1a4a8a; }
+.hint{color:#666;margin-top:8px;font-size:12px;line-height:1.6}
+button.restart-btn{margin-top:8px;padding:10px 30px;font-size:16px;border:none;border-radius:8px;cursor:pointer;background:#0f3460;color:#eee;transition:background 0.2s}
+button.restart-btn:hover{background:#1a4a8a}
 
-  /* Effects bar */
-  .effects-bar {
-    display: flex; justify-content: center; gap: 6px; margin-top: 4px; min-height: 20px;
-  }
-  .effect-tag {
-    font-size: 11px; padding: 2px 8px; border-radius: 10px;
-    color: #fff; animation: pulse 0.8s ease-in-out infinite;
-  }
-  @keyframes pulse { 50% { opacity: 0.6; } }
+.effects-bar{display:flex;justify-content:center;gap:6px;margin-top:4px;min-height:20px;flex-wrap:wrap}
+.effect-tag{font-size:11px;padding:2px 8px;border-radius:10px;color:#fff;animation:pulse 0.8s ease-in-out infinite}
+@keyframes pulse{50%{opacity:0.6}}
 
-  /* Leaderboard */
-  .leaderboard {
-    background: #16213e; border: 2px solid #0f3460;
-    border-radius: 8px; padding: 16px; min-width: 200px; max-height: 550px; overflow-y: auto;
-  }
-  .leaderboard h3 { color: #ffd700; text-align: center; margin-bottom: 12px; font-size: 18px; border-bottom: 1px solid #0f3460; padding-bottom: 8px; }
-  .leaderboard ol { list-style: none; padding: 0; }
-  .leaderboard li { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; border-radius: 4px; color: #ccc; font-size: 14px; gap: 12px; }
-  .leaderboard li:nth-child(1) { color: #ffd700; font-weight: bold; }
-  .leaderboard li:nth-child(2) { color: #c0c0c0; }
-  .leaderboard li:nth-child(3) { color: #cd7f32; }
-  .leaderboard li.highlight { background: rgba(255,215,0,0.1); animation: flash 0.5s ease-in-out 3; }
-  @keyframes flash { 50% { background: rgba(255,215,0,0.25); } }
-  .leaderboard .rank { width: 24px; text-align: center; }
-  .leaderboard .score { color: #0f0; font-weight: bold; min-width: 40px; text-align: right; }
-  .leaderboard .date { color: #888; font-size: 11px; }
-  .leaderboard .empty { color: #555; text-align: center; padding: 20px 0; font-size: 14px; }
+.leaderboard{background:#16213e;border:2px solid #0f3460;border-radius:8px;padding:16px;min-width:200px;max-height:550px;overflow-y:auto}
+.leaderboard h3{color:#ffd700;text-align:center;margin-bottom:12px;font-size:18px;border-bottom:1px solid #0f3460;padding-bottom:8px}
+.leaderboard ol{list-style:none;padding:0}
+.leaderboard li{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-radius:4px;color:#ccc;font-size:14px;gap:12px}
+.leaderboard li:nth-child(1){color:#ffd700;font-weight:bold}
+.leaderboard li:nth-child(2){color:#c0c0c0}
+.leaderboard li:nth-child(3){color:#cd7f32}
+.leaderboard li.highlight{background:rgba(255,215,0,0.1);animation:flash 0.5s ease-in-out 3}
+@keyframes flash{50%{background:rgba(255,215,0,0.25)}}
+.leaderboard .rank{width:24px;text-align:center}
+.leaderboard .score{color:#0f0;font-weight:bold;min-width:40px;text-align:right}
+.leaderboard .date{color:#888;font-size:11px}
+.leaderboard .empty{color:#555;text-align:center;padding:20px 0;font-size:14px}
 
-  .crown-toast {
-    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-    background: #2a1a0e; color: #ffd700; padding: 12px 28px;
-    border-radius: 12px; font-size: 20px; font-weight: bold;
-    border: 2px solid #ffd700; z-index: 100;
-    opacity: 0; transition: opacity 0.3s; pointer-events: none;
-  }
-  .crown-toast.show { opacity: 1; animation: crownPop 0.5s ease-out; }
-  @keyframes crownPop {
-    0% { transform: translateX(-50%) scale(0.5); }
-    50% { transform: translateX(-50%) scale(1.2); }
-    100% { transform: translateX(-50%) scale(1); }
-  }
-  .modal-overlay {
-    position: fixed; top:0;left:0;right:0;bottom:0;
-    background: rgba(0,0,0,0.7); z-index: 200;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .modal {
-    background: #16213e; border: 2px solid #ffd700; border-radius: 16px;
-    padding: 24px; text-align: center; color: #eee; max-width: 340px;
-  }
-  .modal h3 { color: #ffd700; margin-bottom: 12px; }
-  .modal .skin-preview {
-    width: 60px; height: 60px; border-radius: 50%; margin: 12px auto;
-    border: 3px solid #fff; box-shadow: 0 0 15px rgba(255,255,255,0.3);
-  }
-  .modal button { margin: 8px 6px 0; }
-  .modal .cancel { background: #444; }
-  .modal .cancel:hover { background: #666; }
+.crown-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#2a1a0e;color:#ffd700;padding:12px 28px;border-radius:12px;font-size:20px;font-weight:bold;border:2px solid #ffd700;z-index:100;opacity:0;transition:opacity 0.3s;pointer-events:none}
+.crown-toast.show{opacity:1;animation:crownPop 0.5s ease-out}
+@keyframes crownPop{0%{transform:translateX(-50%)scale(0.5)}50%{transform:translateX(-50%)scale(1.2)}100%{transform:translateX(-50%)scale(1)}}
 
-  @media (max-width: 750px) {
-    .wrapper { flex-direction: column; align-items: center; }
-  }
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:200;display:flex;align-items:center;justify-content:center}
+.modal{background:#16213e;border:2px solid #ffd700;border-radius:16px;padding:24px;text-align:center;color:#eee;max-width:380px;max-height:80vh;overflow-y:auto}
+.modal.recharge-modal{border-color:#5cf}
+.modal.recharge-modal h3{color:#5cf}
+.modal h3{color:#ffd700;margin-bottom:12px}
+.modal .skin-preview{width:60px;height:60px;border-radius:50%;margin:12px auto;border:3px solid #fff;box-shadow:0 0 15px rgba(255,255,255,0.3)}
+.modal button{margin:8px 6px 0}
+.modal .cancel{background:#444}
+.modal .cancel:hover{background:#666}
+.modal .buy-btn{background:#0f3460}
+.modal .buy-btn:hover{background:#1a4a8a}
+.modal .recharge-btn{background:#1a3a5c;color:#5cf;border:1px solid #5cf;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:15px;margin:4px;transition:all 0.2s}
+.modal .recharge-btn:hover{background:#2a4a7c;transform:scale(1.05)}
+.modal .recharge-btn .big{font-size:20px;display:block}
+.modal .recharge-btn .sub{font-size:11px;color:#888}
+.recharge-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+
+@media(max-width:750px){.wrapper{flex-direction:column;align-items:center}}
 </style>
 </head>
 <body>
 <div class="crown-toast" id="toast"></div>
-
 <div class="wrapper">
-  <div class="game-container">
-    <div class="header" id="header"></div>
-    <div class="control-bar">
-      <div class="mode-toggle">
-        <button id="btnSingle" class="active">单人</button>
-        <button id="btnDual">双人</button>
-      </div>
-      <button class="opt-btn" id="btnObstacle">障碍物：关</button>
-    </div>
-    <div class="effects-bar" id="effectsBar"></div>
-    <canvas id="canvas"></canvas>
-    <div class="skin-bar" id="skinBar"></div>
-    <p class="hint" id="hintText"></p>
-    <button class="restart-btn" id="restart">重新开始</button>
-  </div>
-  <div class="leaderboard" id="leaderboard">
-    <h3>排行榜</h3>
-  </div>
+<div class="game-container">
+<div class="header" id="header"></div>
+<div class="control-bar">
+<div class="mode-toggle"><button id="btnSingle" class="active">单人</button><button id="btnDual">双人</button></div>
+<button class="opt-btn" id="btnObstacle">障碍物：关</button>
+</div>
+<div class="effects-bar" id="effectsBar"></div>
+<canvas id="canvas"></canvas>
+<div class="skin-section"><div class="skin-section-label">— 基础皮肤 (👑×3解锁) —</div><div class="skin-bar" id="skinBar"></div></div>
+<div class="skin-section"><div class="skin-section-label">— 突破锚点 (💎购买) —</div><div class="skin-bar" id="premiumBar"></div></div>
+<p class="hint" id="hintText"></p>
+<button class="restart-btn" id="restart">重新开始</button>
+</div>
+<div class="leaderboard" id="leaderboard"><h3>排行榜</h3></div>
 </div>
 
 <script>
-var canvas = document.getElementById('canvas');
-var ctx = canvas.getContext('2d');
-var headerEl = document.getElementById('header');
-var lbEl = document.getElementById('leaderboard');
-var toast = document.getElementById('toast');
-var hintEl = document.getElementById('hintText');
-var effectsBar = document.getElementById('effectsBar');
-var btnSingle = document.getElementById('btnSingle');
-var btnDual = document.getElementById('btnDual');
-var btnObstacle = document.getElementById('btnObstacle');
-var skinBar = document.getElementById('skinBar');
+var canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d');
+var headerEl=document.getElementById('header'),lbEl=document.getElementById('leaderboard');
+var toast=document.getElementById('toast'),hintEl=document.getElementById('hintText');
+var effectsBar=document.getElementById('effectsBar');
+var btnSingle=document.getElementById('btnSingle'),btnDual=document.getElementById('btnDual');
+var btnObstacle=document.getElementById('btnObstacle');
+var skinBar=document.getElementById('skinBar'),premiumBar=document.getElementById('premiumBar');
 
-var GRID = 20, CELL = 25, SIZE = GRID*CELL;
-canvas.width = SIZE; canvas.height = SIZE;
-
-var DIR = { UP: {x:0,y:-1}, DOWN: {x:0,y:1}, LEFT: {x:-1,y:0}, RIGHT: {x:1,y:0} };
-var BIG_FOOD_LIFE = 5000, BIG_FOOD_MAX = 50, BIG_FOOD_MIN = 10;
-var CROWN_EVERY = 100, UNLOCK_COST = 3;
-var BASE_SPEED = 130, MIN_SPEED = 55;
-var COMBO_WINDOW = 3000;   // 3秒内连续吃食物触发 combo
-var POWERUP_LIFE = 8000;   // 道具存在 8 秒
-var POWERUP_SPAWN_EVERY = 5; // 每吃 5 个食物生成道具
-var OBSTACLE_COUNT = 10;
+var GRID=20,CELL=25,SIZE=GRID*CELL;canvas.width=SIZE;canvas.height=SIZE;
+var DIR={UP:{x:0,y:-1},DOWN:{x:0,y:1},LEFT:{x:-1,y:0},RIGHT:{x:1,y:0}};
+var BIG_FOOD_LIFE=5000,BIG_FOOD_MAX=50,BIG_FOOD_MIN=10;
+var CROWN_EVERY=100,UNLOCK_COST=3;
+var BASE_SPEED=130,MIN_SPEED=55;
+var COMBO_WINDOW=3000,POWERUP_LIFE=8000,POWERUP_SPAWN_EVERY=5,OBSTACLE_COUNT=10;
 
 // ---- Skins ----
-var SKINS = {
-  '经典绿': { name:'经典绿', tailR:20,tailG:100,tailB:20, headR:80,headG:220,headB:50, headOverride:'rgb(80,220,50)', tongue:'#e94560', dotBg:'linear-gradient(135deg,#146614,#50dc32)', unlocked:true },
-  '烈焰红': { name:'烈焰红', tailR:160,tailG:30,tailB:10, headR:255,headG:80,headB:20, headOverride:'rgb(255,80,20)', tongue:'#ff6633', dotBg:'linear-gradient(135deg,#8b1a1a,#ff4422)', unlocked:false },
-  '深海蓝': { name:'深海蓝', tailR:10,tailG:60,tailB:140, headR:30,headG:180,headB:255, headOverride:'rgb(30,200,255)', tongue:'#44ccff', dotBg:'linear-gradient(135deg,#0a3c8c,#30b4ff)', unlocked:false },
-  '暗夜紫': { name:'暗夜紫', tailR:50,tailG:10,tailB:80, headR:180,headG:50,headB:220, headOverride:'rgb(180,50,220)', tongue:'#cc66ff', dotBg:'linear-gradient(135deg,#3a1a6e,#b464ff)', unlocked:false },
-  '黄金蛇': { name:'黄金蛇', tailR:120,tailG:90,tailB:10, headR:255,headG:215,headB:0, headOverride:'rgb(255,215,0)', tongue:'#ffaa00', dotBg:'linear-gradient(135deg,#7a5a00,#ffd700)', unlocked:false },
-  '彩虹蛇': { name:'彩虹蛇', rainbow:true, headOverride:'rgb(255,100,100)', tongue:'#ff6699', dotBg:'linear-gradient(135deg,red,orange,yellow,green,blue,purple)', unlocked:false }
+var REGULAR_SKINS={
+  '经典绿':{name:'经典绿',tailR:20,tailG:100,tailB:20,headR:80,headG:220,headB:50,headOverride:'rgb(80,220,50)',tongue:'#e94560',dotBg:'linear-gradient(135deg,#146614,#50dc32)',unlocked:true},
+  '烈焰红':{name:'烈焰红',tailR:160,tailG:30,tailB:10,headR:255,headG:80,headB:20,headOverride:'rgb(255,80,20)',tongue:'#ff6633',dotBg:'linear-gradient(135deg,#8b1a1a,#ff4422)',unlocked:false},
+  '深海蓝':{name:'深海蓝',tailR:10,tailG:60,tailB:140,headR:30,headG:180,headB:255,headOverride:'rgb(30,200,255)',tongue:'#44ccff',dotBg:'linear-gradient(135deg,#0a3c8c,#30b4ff)',unlocked:false},
+  '暗夜紫':{name:'暗夜紫',tailR:50,tailG:10,tailB:80,headR:180,headG:50,headB:220,headOverride:'rgb(180,50,220)',tongue:'#cc66ff',dotBg:'linear-gradient(135deg,#3a1a6e,#b464ff)',unlocked:false},
+  '黄金蛇':{name:'黄金蛇',tailR:120,tailG:90,tailB:10,headR:255,headG:215,headB:0,headOverride:'rgb(255,215,0)',tongue:'#ffaa00',dotBg:'linear-gradient(135deg,#7a5a00,#ffd700)',unlocked:false},
+  '彩虹蛇':{name:'彩虹蛇',rainbow:true,headOverride:'rgb(255,100,100)',tongue:'#ff6699',dotBg:'linear-gradient(135deg,red,orange,yellow,green,blue,purple)',unlocked:false}
 };
 
-// ---- Power-up types ----
-var POWERUP_TYPES = [
-  { id:'speed',  icon:'⚡', color:'#ffff00', name:'加速', dur:5000, desc:'速度翻倍' },
-  { id:'shrink', icon:'✂️', color:'#ff44ff', name:'缩小', dur:0,     desc:'蛇身减半' },
-  { id:'ghost',  icon:'👻', color:'#00ffff', name:'穿墙', dur:5000, desc:'穿越墙壁' },
-  { id:'shield', icon:'🛡️', color:'#ffffff', name:'护盾', dur:5000, desc:'免疫碰撞' },
+var PREMIUM_SKINS={
+  '龙焰':{name:'龙焰',price:300,bodyR:200,bodyG:30,bodyB:0,headR:255,headG:120,headB:10,headOverride:'rgb(255,80,0)',tongue:'#ff4400',dotBg:'linear-gradient(135deg,#5a0000,#ff4400,#ffaa00)',effect:'fire',desc:'火焰粒子拖尾'},
+  '霓虹':{name:'霓虹',price:250,bodyR:0,bodyG:220,bodyB:200,headR:255,headG:50,headB:200,headOverride:'rgb(0,255,220)',tongue:'#ff00ff',dotBg:'linear-gradient(135deg,#003344,#00ffcc,#ff00ff)',effect:'neon',desc:'霓虹光晕+脉冲'},
+  '星空':{name:'星空',price:350,bodyR:20,bodyG:10,bodyB:60,headR:100,headG:80,headB:220,headOverride:'rgb(120,100,255)',tongue:'#aa88ff',dotBg:'linear-gradient(135deg,#0a0030,#3333aa,#8888ff)',effect:'galaxy',desc:'星空粒子环绕'},
+  '雷霆':{name:'雷霆',price:300,bodyR:40,bodyG:40,bodyB:120,headR:255,headG:255,headB:100,headOverride:'rgb(255,255,60)',tongue:'#ffff88',dotBg:'linear-gradient(135deg,#111144,#4444cc,#ffff44)',effect:'thunder',desc:'闪电裂痕特效'},
+  '幻影':{name:'幻影',price:250,bodyR:180,bodyG:180,bodyB:220,headR:220,headG:220,headB:255,headOverride:'rgb(200,210,255)',tongue:'#ccccff',dotBg:'linear-gradient(135deg,#334455,#8899bb,#ccddff)',effect:'phantom',desc:'残影拖尾+半透明'},
+  '熔岩':{name:'熔岩',price:300,bodyR:40,bodyG:15,bodyB:5,headR:255,headG:100,headB:20,headOverride:'rgb(255,80,10)',tongue:'#ff4400',dotBg:'linear-gradient(135deg,#1a0500,#993300,#ff6600)',effect:'lava',desc:'熔岩裂纹+火星'}
+};
+
+// ---- Power-ups ----
+var POWERUP_TYPES=[
+  {id:'speed',icon:'⚡',color:'#ffff00',name:'加速',dur:5000},
+  {id:'shrink',icon:'✂️',color:'#ff44ff',name:'缩小',dur:0},
+  {id:'ghost',icon:'👻',color:'#00ffff',name:'穿墙',dur:5000},
+  {id:'shield',icon:'🛡️',color:'#ffffff',name:'护盾',dur:5000},
+];
+
+// ---- Recharge packages ----
+var RECHARGE_PKGS=[
+  {diamonds:60,label:'¥6',desc:'小试牛刀'},
+  {diamonds:300,label:'¥30',desc:'初露锋芒',bonus:30},
+  {diamonds:680,label:'¥68',desc:'横扫千军',bonus:80},
+  {diamonds:1280,label:'¥128',desc:'王者降临',bonus:200},
 ];
 
 // ---- Persistence ----
-function loadData() { try { return JSON.parse(localStorage.getItem('snakeData'))||{}; } catch(e){ return {}; } }
-function saveData(d) { localStorage.setItem('snakeData', JSON.stringify(d)); }
-function getCrowns() { return loadData().crowns||0; }
-function addCrowns(n) { var d=loadData(); d.crowns=(d.crowns||0)+n; saveData(d); }
-function spendCrowns(n) { var d=loadData(); d.crowns=Math.max(0,(d.crowns||0)-n); saveData(d); }
-function getUnlocked() { var u=loadData().unlocked||[]; if(u.length===0) u=['经典绿']; return u; }
-function unlockSkin(name) { var d=loadData(); var u=d.unlocked||['经典绿']; if(u.indexOf(name)===-1) u.push(name); d.unlocked=u; saveData(d); }
-function getActiveSkin() { return loadData().activeSkin||'经典绿'; }
-function setActiveSkin(name) { var d=loadData(); d.activeSkin=name; saveData(d); }
+function loadData(){try{return JSON.parse(localStorage.getItem('snakeData'))||{}}catch(e){return{}}}
+function saveData(d){localStorage.setItem('snakeData',JSON.stringify(d))}
+function getCrowns(){return loadData().crowns||0}
+function addCrowns(n){var d=loadData();d.crowns=(d.crowns||0)+n;saveData(d)}
+function spendCrowns(n){var d=loadData();d.crowns=Math.max(0,(d.crowns||0)-n);saveData(d)}
+function getDiamonds(){return loadData().diamonds||0}
+function addDiamonds(n){var d=loadData();d.diamonds=(d.diamonds||0)+n;saveData(d)}
+function spendDiamonds(n){var d=loadData();d.diamonds=Math.max(0,(d.diamonds||0)-n);saveData(d)}
+function getUnlocked(){var u=loadData().unlocked||[];if(u.length===0)u=['经典绿'];return u}
+function unlockSkin(name){var d=loadData();var u=d.unlocked||['经典绿'];if(u.indexOf(name)===-1)u.push(name);d.unlocked=u;saveData(d)}
+function getActiveSkin(){return loadData().activeSkin||'经典绿'}
+function setActiveSkin(name){var d=loadData();d.activeSkin=name;saveData(d)}
 
 // ---- Leaderboard ----
-function loadLB() { try { return JSON.parse(localStorage.getItem('snakeLB'))||[]; } catch(e){ return []; } }
-function saveLB(d) { localStorage.setItem('snakeLB', JSON.stringify(d)); }
-function addScore(s) {
-  var lb=loadLB(); lb.push({score:s, date:new Date().toLocaleDateString('zh-CN')});
-  lb.sort(function(a,b){return b.score-a.score;}); lb=lb.slice(0,10); saveLB(lb);
-  return {list:lb, newEntry:lb[0]};
-}
-function renderLB(highlightEntry) {
-  var lb=loadLB(), h='<h3>排行榜</h3>';
-  if(lb.length===0) { h+='<div class="empty">还没有成绩<br>快来玩一局吧！</div>'; }
-  else {
-    h+='<ol>';
-    for(var i=0;i<lb.length;i++) {
-      var cls='';
-      if(highlightEntry&&lb[i]&&lb[i].score===highlightEntry.score&&lb[i].date===highlightEntry.date) cls=' highlight';
-      h+='<li class="'+cls+'"><span class="rank">'+(i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1))+'</span><span class="score">'+lb[i].score+'</span><span class="date">'+lb[i].date+'</span></li>';
-    }
-    h+='</ol>';
+function loadLB(){try{return JSON.parse(localStorage.getItem('snakeLB'))||[]}catch(e){return[]}}
+function saveLB(d){localStorage.setItem('snakeLB',JSON.stringify(d))}
+function addScore(s){var lb=loadLB();lb.push({score:s,date:new Date().toLocaleDateString('zh-CN')});lb.sort(function(a,b){return b.score-a.score});lb=lb.slice(0,10);saveLB(lb);return{list:lb,newEntry:lb[0]}}
+function renderLB(hl){var lb=loadLB(),h='<h3>排行榜</h3>';if(lb.length===0)h+='<div class="empty">还没有成绩<br>快来玩一局吧！</div>';else{h+='<ol>';for(var i=0;i<lb.length;i++){var cls='';if(hl&&lb[i]&&lb[i].score===hl.score&&lb[i].date===hl.date)cls=' highlight';h+='<li class="'+cls+'"><span class="rank">'+(i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1))+'</span><span class="score">'+lb[i].score+'</span><span class="date">'+lb[i].date+'</span></li>'}h+='</ol>'}lbEl.innerHTML=h}
+
+// ---- Build skin bars ----
+function buildSkinBars(){
+  var unlocked=getUnlocked(),active=getActiveSkin();
+  // Regular skins
+  var rn=Object.keys(REGULAR_SKINS),rh='';
+  for(var i=0;i<rn.length;i++){
+    var name=rn[i],s=REGULAR_SKINS[name],isU=unlocked.indexOf(name)!==-1,isA=name===active;
+    var cls='skin-dot'+(isA?' active':'')+(isU?'':' locked');
+    rh+='<div class="'+cls+'" data-skin="'+name+'" data-type="regular" style="background:'+s.dotBg+'">'+(isU?'':'<span>🔒</span>')+'</div>';
   }
-  lbEl.innerHTML=h;
+  skinBar.innerHTML=rh;
+  // Premium skins
+  var pn=Object.keys(PREMIUM_SKINS),ph='';
+  for(var i=0;i<pn.length;i++){
+    var name=pn[i],s=PREMIUM_SKINS[name],isU=unlocked.indexOf(name)!==-1,isA=name===active;
+    var cls='skin-dot premium'+(isA?' active':'')+(isU?'':' locked');
+    var inner=isU?'':'<span>🔒</span>';
+    ph+='<div class="'+cls+'" data-skin="'+name+'" data-type="premium" style="background:'+s.dotBg+'">'+inner+'<div class="price-tag">💎'+s.price+'</div></div>';
+  }
+  premiumBar.innerHTML=ph;
 }
 
-// ---- Skin UI ----
-function buildSkinBar() {
-  var unlocked=getUnlocked(), active=getActiveSkin(), names=Object.keys(SKINS), html='';
-  for(var i=0;i<names.length;i++) {
-    var name=names[i], skin=SKINS[name], isUnlocked=unlocked.indexOf(name)!==-1, isActive=name===active;
-    var cls='skin-dot'+(isActive?' active':'')+(isUnlocked?'':' locked');
-    var inner=isUnlocked?'':'<span class="lock">🔒</span>';
-    html+='<div class="'+cls+'" data-skin="'+name+'" style="background:'+skin.dotBg+'">'+inner+'</div>';
-  }
-  skinBar.innerHTML=html;
+function onSkinClick(e){
+  var dot=e.target.closest('.skin-dot');if(!dot)return;
+  var name=dot.getAttribute('data-skin'),type=dot.getAttribute('data-type');
+  if(getUnlocked().indexOf(name)!==-1){setActiveSkin(name);buildSkinBars();return}
+  if(type==='regular')showUnlockCrownModal(name);
+  else showBuyDiamondModal(name);
 }
-skinBar.addEventListener('click', function(e) {
-  var dot=e.target.closest('.skin-dot'); if(!dot) return;
-  var name=dot.getAttribute('data-skin');
-  if(getUnlocked().indexOf(name)!==-1) { setActiveSkin(name); buildSkinBar(); }
-  else showUnlockModal(name);
-});
-function showUnlockModal(name) {
-  var crowns=getCrowns(), skin=SKINS[name];
-  var ex=document.querySelector('.modal-overlay'); if(ex) ex.remove();
-  var ov=document.createElement('div'); ov.className='modal-overlay';
-  ov.innerHTML='<div class="modal"><h3>解锁皮肤：'+name+'</h3><div class="skin-preview" style="background:'+skin.dotBg+'"></div><p style="margin:8px 0">消耗 👑×'+UNLOCK_COST+'</p><p style="color:'+(crowns>=UNLOCK_COST?'#ffd700':'#e94560')+';font-size:14px">拥有：👑×'+crowns+'</p><button id="btnUnlock"'+(crowns>=UNLOCK_COST?'':' disabled style="opacity:0.4"')+'>解锁</button><button class="cancel" id="btnCancel">取消</button></div>';
+skinBar.addEventListener('click',onSkinClick);
+premiumBar.addEventListener('click',onSkinClick);
+
+function showUnlockCrownModal(name){
+  var crowns=getCrowns(),s=REGULAR_SKINS[name];
+  var ex=document.querySelector('.modal-overlay');if(ex)ex.remove();
+  var ov=document.createElement('div');ov.className='modal-overlay';
+  ov.innerHTML='<div class="modal"><h3>解锁：'+name+'</h3><div class="skin-preview" style="background:'+s.dotBg+'"></div><p>👑×'+UNLOCK_COST+' | 拥有：👑×'+crowns+'</p><button id="btnAct"'+(crowns>=UNLOCK_COST?'':' disabled style="opacity:0.4"')+'>解锁</button><button class="cancel" id="btnCancel">取消</button></div>';
   document.body.appendChild(ov);
-  ov.querySelector('#btnCancel').onclick=function(){ov.remove();};
-  ov.querySelector('#btnUnlock').onclick=function(){
-    if(getCrowns()>=UNLOCK_COST){ spendCrowns(UNLOCK_COST); unlockSkin(name); setActiveSkin(name); buildSkinBar(); updateCrownDisplay(); ov.remove(); }
-  };
-  ov.addEventListener('click',function(e){if(e.target===ov) ov.remove();});
+  ov.querySelector('#btnCancel').onclick=function(){ov.remove()};
+  ov.querySelector('#btnAct').onclick=function(){if(getCrowns()>=UNLOCK_COST){spendCrowns(UNLOCK_COST);unlockSkin(name);setActiveSkin(name);buildSkinBars();updateAllDisplays();ov.remove()}};
+  ov.addEventListener('click',function(e){if(e.target===ov)ov.remove()});
+}
+
+function showBuyDiamondModal(name){
+  var diamonds=getDiamonds(),s=PREMIUM_SKINS[name];
+  var ex=document.querySelector('.modal-overlay');if(ex)ex.remove();
+  var ov=document.createElement('div');ov.className='modal-overlay';
+  ov.innerHTML='<div class="modal recharge-modal"><h3>💎 购买：'+name+'</h3><div class="skin-preview" style="background:'+s.dotBg+'"></div><p style="color:#aaa;font-size:13px">'+s.desc+'</p><p>价格：💎'+s.price+' | 余额：💎'+diamonds+'</p><button id="btnBuy"'+(diamonds>=s.price?'':' disabled style="opacity:0.4"')+'>购买</button><button class="cancel" id="btnCancel">取消</button><p style="margin-top:10px;font-size:12px;color:#888">钻石不足？<a href="#" id="lnkRecharge" style="color:#5cf">去充值 →</a></p></div>';
+  document.body.appendChild(ov);
+  ov.querySelector('#btnCancel').onclick=function(){ov.remove()};
+  ov.querySelector('#btnBuy').onclick=function(){if(getDiamonds()>=s.price){spendDiamonds(s.price);unlockSkin(name);setActiveSkin(name);buildSkinBars();updateAllDisplays();ov.remove()}};
+  ov.querySelector('#lnkRecharge').onclick=function(e){e.preventDefault();ov.remove();showRechargeModal()};
+  ov.addEventListener('click',function(e){if(e.target===ov)ov.remove()});
+}
+
+function showRechargeModal(){
+  var diamonds=getDiamonds();
+  var ex=document.querySelector('.modal-overlay');if(ex)ex.remove();
+  var ov=document.createElement('div');ov.className='modal-overlay';
+  var h='<div class="modal recharge-modal"><h3>💎 钻石充值</h3><p style="color:#5cf;font-size:20px">当前 💎'+diamonds+'</p><div class="recharge-grid">';
+  for(var i=0;i<RECHARGE_PKGS.length;i++){
+    var p=RECHARGE_PKGS[i],total=p.diamonds+(p.bonus||0);
+    h+='<button class="recharge-btn" data-idx="'+i+'"><span class="big">💎'+total+'</span><span class="sub">'+p.label+' · '+p.desc+(p.bonus?' · 赠送'+p.bonus:'')+'</span></button>';
+  }
+  h+='</div><button class="cancel" id="btnClose">关闭</button></div>';
+  ov.innerHTML=h;
+  document.body.appendChild(ov);
+  for(var i=0;i<RECHARGE_PKGS.length;i++){
+    (function(idx){
+      ov.querySelector('.recharge-btn[data-idx="'+idx+'"]').onclick=function(){
+        var p=RECHARGE_PKGS[idx],total=p.diamonds+(p.bonus||0);
+        addDiamonds(total);updateAllDisplays();
+        ov.querySelector('p').innerHTML='<span style="color:#5cf;font-size:20px">当前 💎'+getDiamonds()+'</span>';
+        showToast('💎 充值成功！+'+total+' 钻石');
+      };
+    })(i);
+  }
+  ov.querySelector('#btnClose').onclick=function(){ov.remove()};
+  ov.addEventListener('click',function(e){if(e.target===ov)ov.remove()});
 }
 
 // ---- Toast ----
 var toastTimer=null;
-function showToast(msg) {
-  toast.textContent=msg; toast.classList.remove('show');
-  void toast.offsetWidth; toast.classList.add('show');
-  if(toastTimer) clearTimeout(toastTimer);
-  toastTimer=setTimeout(function(){toast.classList.remove('show');},2000);
-}
+function showToast(msg){toast.textContent=msg;toast.classList.remove('show');void toast.offsetWidth;toast.classList.add('show');if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(function(){toast.classList.remove('show')},2000)}
 
 // ---- Settings ----
-var mode = 'single';
-var obstacleMode = false;
-btnSingle.addEventListener('click', function(){ switchMode('single'); });
-btnDual.addEventListener('click', function(){ switchMode('dual'); });
-btnObstacle.addEventListener('click', function(){
-  obstacleMode = !obstacleMode;
-  btnObstacle.textContent = '障碍物：' + (obstacleMode ? '开' : '关');
-  btnObstacle.className = 'opt-btn' + (obstacleMode ? ' active' : '');
-  clearTimeout(gameLoop);
-  initGame(); draw(); loop();
-});
+var mode='single',obstacleMode=false;
+btnSingle.addEventListener('click',function(){switchMode('single')});
+btnDual.addEventListener('click',function(){switchMode('dual')});
+btnObstacle.addEventListener('click',function(){obstacleMode=!obstacleMode;btnObstacle.textContent='障碍物：'+(obstacleMode?'开':'关');btnObstacle.className='opt-btn'+(obstacleMode?' active':'');clearTimeout(gameLoop);initGame();draw();loop()});
+function switchMode(m){if(mode===m)return;mode=m;btnSingle.className=m==='single'?'active':'';btnDual.className=m==='dual'?'active':'';clearTimeout(gameLoop);initGame();draw();loop()}
 
-function switchMode(m) {
-  if(mode===m) return;
-  mode=m;
-  btnSingle.className=m==='single'?'active':'';
-  btnDual.className=m==='dual'?'active':'';
-  clearTimeout(gameLoop);
-  initGame(); draw(); loop();
+function updateAllDisplays(){
+  updateCrownDisplay();updateDiamondDisplay();
 }
+function updateCrownDisplay(){var el=document.getElementById('crownDisplay');if(el)el.textContent=getCrowns()}
+function updateDiamondDisplay(){var el=document.getElementById('diamondDisplay');if(el)el.textContent=getDiamonds()}
 
-function updateCrownDisplay() {
-  var el=document.getElementById('crownDisplay'); if(el) el.textContent=getCrowns();
-}
-
-function buildHeader() {
-  var crowns=getCrowns(), best=parseInt(localStorage.getItem('snakeBest'))||0, h='';
-  if(mode==='single') {
+function buildHeader(){
+  var crowns=getCrowns(),diamonds=getDiamonds(),best=parseInt(localStorage.getItem('snakeBest'))||0,h='';
+  if(mode==='single'){
     h+='<div class="score-box">得分 <span class="val" id="score">0</span></div>';
     h+='<div class="score-box">大球 <span id="progress">0/5</span></div>';
     h+='<div class="score-box">👑 <span id="crownDisplay">'+crowns+'</span></div>';
+    h+='<div class="score-box diamond-box" id="diamondBox" title="点击充值">💎 <span id="diamondDisplay">'+diamonds+'</span> <span class="plus">+</span></div>';
     h+='<div class="score-box">最高分 <span class="val" id="best">'+best+'</span></div>';
-  } else {
+  }else{
     h+='<div class="score-box">🟢P1 <span class="score-p1" id="score1">0</span></div>';
     h+='<div class="score-box">🔵P2 <span class="score-p2" id="score2">0</span></div>';
     h+='<div class="score-box">大球 <span id="progress">0/5</span></div>';
     h+='<div class="score-box">👑 <span id="crownDisplay">'+crowns+'</span></div>';
+    h+='<div class="score-box diamond-box" id="diamondBox" title="点击充值">💎 <span id="diamondDisplay">'+diamonds+'</span> <span class="plus">+</span></div>';
     h+='<div class="score-box">最高分 <span class="val" id="best">'+best+'</span></div>';
   }
   headerEl.innerHTML=h;
+  var db=document.getElementById('diamondBox');if(db)db.addEventListener('click',showRechargeModal);
 }
 
-// ---- Speed system ----
-function calcSpeedLevel(score) { return Math.floor(score/50); }
-function calcSpeed(score) {
-  var lv = calcSpeedLevel(score);
-  return Math.max(MIN_SPEED, BASE_SPEED - lv * 5);
-}
-function calcSpeedMultiplier(score) {
-  var lv = calcSpeedLevel(score);
-  return 1 + lv * 0.12; // 每级+12%分数
+// ---- Speed / Combo ----
+function calcSpeedLevel(s){return Math.floor(s/50)}
+function calcSpeed(s){return Math.max(MIN_SPEED,BASE_SPEED-calcSpeedLevel(s)*5)}
+function calcSpeedMultiplier(s){return 1+calcSpeedLevel(s)*0.12}
+function getComboMultiplier(c){if(!c||c.count<2)return 1;if(c.count>=10)return 5;if(c.count>=5)return 3;return 2}
+
+// ---- Particles ----
+var particles=[],trail=[];
+
+function spawnParticles(x,y,color,count,spread){
+  for(var i=0;i<count;i++){
+    particles.push({x:x,y:y,vx:(Math.random()-0.5)*spread,vy:(Math.random()-0.5)*spread,life:1,decay:0.015+Math.random()*0.04,color:color,size:1+Math.random()*3});
+  }
 }
 
-// ---- Combo system ----
-// combo: { count, lastEatTime } per player
-function getComboMultiplier(combo) {
-  if (!combo || combo.count < 2) return 1;
-  if (combo.count >= 10) return 5;
-  if (combo.count >= 5) return 3;
-  return 2;
+function updateParticles(){
+  for(var i=particles.length-1;i>=0;i--){
+    var p=particles[i];p.x+=p.vx;p.y+=p.vy;p.life-=p.decay;
+    if(p.life<=0)particles.splice(i,1);
+  }
 }
 
 // ---- Game State ----
-var snake, snake1, snake2, food, bigFood, powerup, obstacles;
-var direction, nextDirection, direction1, direction2, nextD1, nextD2;
-var score, score1, score2, best, gameOver, alive1, alive2;
-var eatCount, eatCount1, eatCount2, pwrCount, pwrCount1, pwrCount2;
-var earnedCrowns, earnedCrowns1, earnedCrowns2;
-var crownMilestone, cm1, cm2;
-var combo, combo1, combo2;
-var effects, effects1, effects2;  // { speed:endTime, ghost:endTime, shield:endTime }
+var snake,snake1,snake2,food,bigFood,powerup,obstacles;
+var direction,nextDirection,direction1,direction2,nextD1,nextD2;
+var score,score1,score2,best,gameOver,alive1,alive2;
+var eatCount,eatCount1,eatCount2,pwrCount,pwrCount1,pwrCount2;
+var earnedCrowns,earnedCrowns1,earnedCrowns2;
+var crownMilestone,cm1,cm2;
+var combo,combo1,combo2;
+var effects,effects1,effects2;
 var gameLoop;
 
-best = parseInt(localStorage.getItem('snakeBest')) || 0;
+best=parseInt(localStorage.getItem('snakeBest'))||0;
 
-function makeEffects() {
-  return { speed:0, ghost:0, shield:0 };
-}
+function makeEffects(){return{speed:0,ghost:0,shield:0}}
 
-function initGame() {
-  buildHeader();
-  updateCrownDisplay();
-  effectsBar.innerHTML = '';
-
-  food=null; bigFood=null; powerup=null; obstacles=[];
+function initGame(){
+  buildHeader();updateCrownDisplay();updateDiamondDisplay();
+  effectsBar.innerHTML='';particles=[];trail=[];
+  food=null;bigFood=null;powerup=null;obstacles=[];
   var cx=Math.floor(GRID/2);
-
-  if (obstacleMode) generateObstacles();
-
-  if (mode==='single') {
+  if(obstacleMode)generateObstacles();
+  if(mode==='single'){
     snake=[{x:cx,y:cx},{x:cx-1,y:cx},{x:cx-2,y:cx}];
-    direction=DIR.RIGHT; nextDirection=DIR.RIGHT;
-    score=0; gameOver=false;
-    eatCount=0; pwrCount=0; earnedCrowns=0; crownMilestone=CROWN_EVERY;
-    combo={count:0, lastEatTime:0};
-    effects=makeEffects();
-    updateScoreEl('score',0); updateProgressEl(0);
-  } else {
-    snake1=[{x:3,y:3},{x:2,y:3},{x:1,y:3}];
-    direction1=DIR.RIGHT; nextD1=DIR.RIGHT;
-    score1=0; alive1=true;
-    eatCount1=0; pwrCount1=0; earnedCrowns1=0; cm1=CROWN_EVERY;
-    combo1={count:0, lastEatTime:0};
-    effects1=makeEffects();
-
-    snake2=[{x:16,y:16},{x:17,y:16},{x:18,y:16}];
-    direction2=DIR.LEFT; nextD2=DIR.LEFT;
-    score2=0; alive2=true;
-    eatCount2=0; pwrCount2=0; earnedCrowns2=0; cm2=CROWN_EVERY;
-    combo2={count:0, lastEatTime:0};
-    effects2=makeEffects();
-
-    updateScoreEl('score1',0); updateScoreEl('score2',0); updateProgressEl(0);
+    direction=DIR.RIGHT;nextDirection=DIR.RIGHT;
+    score=0;gameOver=false;
+    eatCount=0;pwrCount=0;earnedCrowns=0;crownMilestone=CROWN_EVERY;
+    combo={count:0,lastEatTime:0};effects=makeEffects();
+    updateScoreEl('score',0);updateProgressEl(0);
+  }else{
+    snake1=[{x:3,y:3},{x:2,y:3},{x:1,y:3}];direction1=DIR.RIGHT;nextD1=DIR.RIGHT;score1=0;alive1=true;eatCount1=0;pwrCount1=0;earnedCrowns1=0;cm1=CROWN_EVERY;combo1={count:0,lastEatTime:0};effects1=makeEffects();
+    snake2=[{x:16,y:16},{x:17,y:16},{x:18,y:16}];direction2=DIR.LEFT;nextD2=DIR.LEFT;score2=0;alive2=true;eatCount2=0;pwrCount2=0;earnedCrowns2=0;cm2=CROWN_EVERY;combo2={count:0,lastEatTime:0};effects2=makeEffects();
+    updateScoreEl('score1',0);updateScoreEl('score2',0);updateProgressEl(0);
   }
-
   spawnFood();
 }
 
-function generateObstacles() {
-  obstacles = [];
-  var occupied = new Set();
-  if(mode==='single') for(var i=0;i<snake.length;i++) occupied.add(snake[i].x+','+snake[i].y);
-  else { for(var i=0;i<snake1.length;i++) occupied.add(snake1[i].x+','+snake1[i].y);
-         for(var i=0;i<snake2.length;i++) occupied.add(snake2[i].x+','+snake2[i].y); }
-  if(food) occupied.add(food.x+','+food.y);
-
-  var free=[];
-  for(var x=0;x<GRID;x++) for(var y=0;y<GRID;y++) if(!occupied.has(x+','+y)) free.push({x:x,y:y});
-
-  var n = Math.min(OBSTACLE_COUNT, free.length);
-  for(var i=0;i<n;i++) {
-    var idx = Math.floor(Math.random()*free.length);
-    obstacles.push(free[idx]);
-    free.splice(idx,1);
-  }
+function generateObstacles(){
+  obstacles=[];var occ=new Set();
+  function add(s){if(s)for(var i=0;i<s.length;i++)occ.add(s[i].x+','+s[i].y)}
+  if(mode==='single')add(snake);else{add(snake1);add(snake2)}
+  if(food)occ.add(food.x+','+food.y);
+  var free=[];for(var x=0;x<GRID;x++)for(var y=0;y<GRID;y++)if(!occ.has(x+','+y))free.push({x:x,y:y});
+  var n=Math.min(OBSTACLE_COUNT,free.length);
+  for(var i=0;i<n;i++){var idx=Math.floor(Math.random()*free.length);obstacles.push(free[idx]);free.splice(idx,1)}
 }
 
-function updateScoreEl(id, val) { var el=document.getElementById(id); if(el) el.textContent=val; }
-function updateProgressEl(count) { var el=document.getElementById('progress'); if(el) el.textContent=count+'/5'; }
+function updateScoreEl(id,val){var el=document.getElementById(id);if(el)el.textContent=val}
+function updateProgressEl(c){var el=document.getElementById('progress');if(el)el.textContent=c+'/5'}
 
-function occupiedSet() {
-  var set = new Set();
-  function add(s) { if(s) for(var i=0;i<s.length;i++) set.add(s[i].x+','+s[i].y); }
-  if(mode==='single') add(snake);
-  else { add(snake1); add(snake2); }
-  if(food) set.add(food.x+','+food.y);
-  if(bigFood) set.add(bigFood.x+','+bigFood.y);
-  if(powerup) set.add(powerup.x+','+powerup.y);
-  for(var i=0;i<obstacles.length;i++) set.add(obstacles[i].x+','+obstacles[i].y);
+function occupiedSet(){
+  var set=new Set();
+  function add(s){if(s)for(var i=0;i<s.length;i++)set.add(s[i].x+','+s[i].y)}
+  if(mode==='single')add(snake);else{add(snake1);add(snake2)}
+  if(food)set.add(food.x+','+food.y);if(bigFood)set.add(bigFood.x+','+bigFood.y);
+  if(powerup)set.add(powerup.x+','+powerup.y);
+  for(var i=0;i<obstacles.length;i++)set.add(obstacles[i].x+','+obstacles[i].y);
   return set;
 }
+function randomFreePos(){var occ=occupiedSet();var free=[];for(var x=0;x<GRID;x++)for(var y=0;y<GRID;y++)if(!occ.has(x+','+y))free.push({x:x,y:y});if(free.length===0)return null;return free[Math.floor(Math.random()*free.length)]}
+function spawnFood(){var pos=randomFreePos();if(pos)food=pos}
+function spawnBigFood(){var pos=randomFreePos();if(pos)bigFood={x:pos.x,y:pos.y,born:Date.now()}}
+function spawnPowerup(){if(powerup)return;var pos=randomFreePos();if(!pos)return;powerup={x:pos.x,y:pos.y,type:POWERUP_TYPES[Math.floor(Math.random()*POWERUP_TYPES.length)],born:Date.now()}}
 
-function randomFreePos() {
-  var occ = occupiedSet();
-  var free=[];
-  for(var x=0;x<GRID;x++) for(var y=0;y<GRID;y++) if(!occ.has(x+','+y)) free.push({x:x,y:y});
-  if(free.length===0) return null;
-  return free[Math.floor(Math.random()*free.length)];
+// ---- Effect tags ----
+function renderEffects(){
+  var tags=[];
+  function ae(effs,p){var n=Date.now();if(effs.speed>n)tags.push({c:'#ffff00',t:p+'加速 '+Math.ceil((effs.speed-n)/1000)+'s'});if(effs.ghost>n)tags.push({c:'#00ffff',t:p+'穿墙 '+Math.ceil((effs.ghost-n)/1000)+'s'});if(effs.shield>n)tags.push({c:'#ffffff',t:p+'护盾 '+Math.ceil((effs.shield-n)/1000)+'s'})}
+  if(mode==='single')ae(effects,'');else{if(alive1)ae(effects1,'P1 ');if(alive2)ae(effects2,'P2 ')}
+  effectsBar.innerHTML=tags.map(function(t){return'<span class="effect-tag" style="background:'+t.c+'33;border:1px solid '+t.c+'">'+t.t+'</span>'}).join('');
 }
 
-function spawnFood() { var pos=randomFreePos(); if(pos) food=pos; }
-function spawnBigFood() { var pos=randomFreePos(); if(pos) bigFood={x:pos.x,y:pos.y,born:Date.now()}; }
-function spawnPowerup() {
-  if (powerup) return;
-  var pos=randomFreePos(); if(!pos) return;
-  var type = POWERUP_TYPES[Math.floor(Math.random()*POWERUP_TYPES.length)];
-  powerup = { x:pos.x, y:pos.y, type:type, born:Date.now() };
+// ---- Draw helpers ----
+function hslToRgb(h,s,l){var r,g,b;if(s===0)r=g=b=l;else{var h2r=function(p,q,t){if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p};var q=l<0.5?l*(1+s):l+s-l*s,p=2*l-q;r=h2r(p,q,h+1/3);g=h2r(p,q,h);b=h2r(p,q,h-1/3)}return[Math.floor(r*255),Math.floor(g*255),Math.floor(b*255)]}
+
+function getSkinData(name){
+  var s=REGULAR_SKINS[name]||PREMIUM_SKINS[name]||REGULAR_SKINS['经典绿'];
+  return s;
 }
 
-// ---- Effects rendering ----
-function renderEffects() {
-  var tags = [];
-  function addEff(effs, prefix) {
-    var now=Date.now();
-    if(effs.speed>now) tags.push({c:'#ffff00', t:prefix+'加速 '+(Math.ceil((effs.speed-now)/1000))+'s'});
-    if(effs.ghost>now) tags.push({c:'#00ffff', t:prefix+'穿墙 '+(Math.ceil((effs.ghost-now)/1000))+'s'});
-    if(effs.shield>now) tags.push({c:'#ffffff', t:prefix+'护盾 '+(Math.ceil((effs.shield-now)/1000))+'s'});
+function drawOneSnake(snakeArr,dir,skinName){
+  var len=snakeArr.length;if(len===0)return;
+  var sk=getSkinData(skinName);
+  var isRainbow=sk.rainbow,effect=sk.effect||'',now=Date.now();
+
+  // ---- Trail (Phantom skin) ----
+  if(effect==='phantom'&&len>0){
+    var head=snakeArr[len-1];
+    trail.push({x:head.x*CELL+CELL/2,y:head.y*CELL+CELL/2,life:1});
+    if(trail.length>8)trail.shift();
+    for(var ti=0;ti<trail.length;ti++){
+      trail[ti].life-=0.12;
+      if(trail[ti].life>0){
+        ctx.fillStyle='rgba(180,200,240,'+(trail[ti].life*0.3)+')';
+        ctx.beginPath();ctx.arc(trail[ti].x,trail[ti].y,(CELL/2-2)*trail[ti].life,0,Math.PI*2);ctx.fill();
+      }
+    }
   }
-  if(mode==='single') addEff(effects, '');
-  else { if(alive1) addEff(effects1, 'P1 '); if(alive2) addEff(effects2, 'P2 '); }
-  effectsBar.innerHTML = tags.map(function(t){return '<span class="effect-tag" style="background:'+t.c+'33;border:1px solid '+t.c+'">'+t.t+'</span>';}).join('');
-}
 
-// ---- Draw ----
-function getSkinColors(name) {
-  var s=SKINS[name]||SKINS['经典绿'];
-  if(s.rainbow) return {rainbow:true, headOverride:s.headOverride, tongue:s.tongue};
-  return {tailR:s.tailR,tailG:s.tailG,tailB:s.tailB, headR:s.headR,headG:s.headG,headB:s.headB, headOverride:s.headOverride, tongue:s.tongue};
-}
+  // ---- Neon glow ----
+  if(effect==='neon'&&len>0){
+    var nh=snakeArr[len-1],ncx=nh.x*CELL+CELL/2,ncy=nh.y*CELL+CELL/2;
+    for(var gl=3;gl>=0;gl--){
+      ctx.strokeStyle='rgba(0,255,220,'+(0.08-gl*0.02)+')';ctx.lineWidth=gl*4+2;
+      ctx.beginPath();ctx.arc(ncx,ncy,CELL/2+gl*3,0,Math.PI*2);ctx.stroke();
+    }
+  }
 
-function drawOneSnake(snakeArr, dir, skinName) {
-  var len=snakeArr.length; if(len===0) return;
-  var colors=getSkinColors(skinName), isRainbow=colors.rainbow, now=Date.now();
-
-  for(var j=0;j<len;j++) {
-    var seg=snakeArr[j], cx=seg.x*CELL+CELL/2, cy=seg.y*CELL+CELL/2;
-    var isHead=(j===len-1), isTail=(j===0), t=j/Math.max(len-1,1);
+  // Draw body segments
+  for(var j=0;j<len;j++){
+    var seg=snakeArr[j],cx=seg.x*CELL+CELL/2,cy=seg.y*CELL+CELL/2;
+    var isHead=(j===len-1),isTail=(j===0),t=j/Math.max(len-1,1);
     var R,G,B;
-    if(isRainbow){var rgb=hslToRgb(((j*30+now/50)%360)/360,0.8,0.5+0.3*t);R=rgb[0];G=rgb[1];B=rgb[2];}
-    else{R=Math.floor(colors.tailR+(colors.headR-colors.tailR)*t);G=Math.floor(colors.tailG+(colors.headG-colors.tailG)*t);B=Math.floor(colors.tailB+(colors.headB-colors.tailB)*t);}
+    if(isRainbow){var rgb=hslToRgb(((j*30+now/50)%360)/360,0.8,0.5+0.3*t);R=rgb[0];G=rgb[1];B=rgb[2]}
+    else{R=Math.floor(sk.tailR+(sk.headR-sk.tailR)*t);G=Math.floor(sk.tailG+(sk.headG-sk.tailG)*t);B=Math.floor(sk.tailB+(sk.headB-sk.tailB)*t)}
+
+    // Lava cracks
+    if(effect==='lava'&&!isHead&&j%3===0){
+      var lr=Math.max(0,R+40),lg=Math.max(0,G-20),lb=Math.max(0,B-30);
+      ctx.fillStyle='rgb('+Math.min(255,lr)+','+Math.min(255,lg+20)+','+lb+')';
+      ctx.beginPath();ctx.arc(cx+Math.sin(j*2.5)*3,cy+Math.cos(j*3)*3,CELL/6,0,Math.PI*2);ctx.fill();
+    }
+    // Thunder cracks
+    if(effect==='thunder'&&!isHead&&j%4===0){
+      ctx.strokeStyle='rgba(255,255,200,'+(0.4+0.3*Math.sin(now/100+j))+')';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(cx-5,cy-3);ctx.lineTo(cx+2,cy-1);ctx.lineTo(cx-2,cy+2);ctx.lineTo(cx+5,cy+4);ctx.stroke();
+    }
+
     var r=isHead?CELL/2-2:(isTail?CELL/3:CELL/2.4);
-    ctx.fillStyle='rgb('+R+','+G+','+B+')'; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,'+(0.08+0.07*t)+')'; ctx.beginPath(); ctx.arc(cx-2,cy-r*0.3,r*0.55,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgb('+R+','+G+','+B+')';ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,'+(0.08+0.07*t)+')';ctx.beginPath();ctx.arc(cx-2,cy-r*0.3,r*0.55,0,Math.PI*2);ctx.fill();
   }
+
+  // Connect segments
   ctx.lineCap='round';
-  for(var k=0;k<len-1;k++) {
+  for(var k=0;k<len-1;k++){
     var a=snakeArr[k],b=snakeArr[k+1],ax=a.x*CELL+CELL/2,ay=a.y*CELL+CELL/2,bx=b.x*CELL+CELL/2,by=b.y*CELL+CELL/2;
     var tk=k/Math.max(len-1,1),RR,GG,BB;
-    if(isRainbow){var rgb2=hslToRgb(((k*30+now/50)%360)/360,0.8,0.5+0.3*tk);RR=rgb2[0];GG=rgb2[1];BB=rgb2[2];}
-    else{RR=Math.floor(colors.tailR+(colors.headR-colors.tailR)*tk);GG=Math.floor(colors.tailG+(colors.headG-colors.tailG)*tk);BB=Math.floor(colors.tailB+(colors.headB-colors.tailB)*tk);}
+    if(isRainbow){var rgb2=hslToRgb(((k*30+now/50)%360)/360,0.8,0.5+0.3*tk);RR=rgb2[0];GG=rgb2[1];BB=rgb2[2]}
+    else{RR=Math.floor(sk.tailR+(sk.headR-sk.tailR)*tk);GG=Math.floor(sk.tailG+(sk.headG-sk.tailG)*tk);BB=Math.floor(sk.tailB+(sk.headB-sk.tailB)*tk)}
     ctx.strokeStyle='rgb('+RR+','+GG+','+BB+')';ctx.lineWidth=CELL*0.78;
     ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
     ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=CELL*0.3;
     ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
   }
-  var head=snakeArr[len-1],hx=head.x*CELL+CELL/2,hy=head.y*CELL+CELL/2;
-  ctx.fillStyle=colors.headOverride; ctx.beginPath(); ctx.ellipse(hx,hy,CELL/2-1,CELL/2-3,0,0,Math.PI*2); ctx.fill();
+
+  // Head
+  var hd=snakeArr[len-1],hx=hd.x*CELL+CELL/2,hy=hd.y*CELL+CELL/2;
+  ctx.fillStyle=sk.headOverride;ctx.beginPath();ctx.ellipse(hx,hy,CELL/2-1,CELL/2-3,0,0,Math.PI*2);ctx.fill();
+
+  // Eyes
   var eyeOffX=0,eyeOffY=0;
   if(dir.x===1){eyeOffX=4}else if(dir.x===-1){eyeOffX=-4}else if(dir.y===-1){eyeOffY=-4}else{eyeOffY=4}
   var perpX=dir.y*5,perpY=dir.x*5;
@@ -494,423 +474,219 @@ function drawOneSnake(snakeArr, dir, skinName) {
     ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ex,ey,4,0,Math.PI*2);ctx.fill();
     ctx.fillStyle='#111';ctx.beginPath();ctx.arc(ex+dir.x*1.5,ey+dir.y*1.5,2,0,Math.PI*2);ctx.fill();
   }
-  var tongueLen=10+3*Math.sin(now/150);
-  var tx=hx+dir.x*(CELL/2+tongueLen),ty=hy+dir.y*(CELL/2+tongueLen);
-  ctx.strokeStyle=colors.tongue;ctx.lineWidth=2;
+
+  // Tongue
+  var tl=10+3*Math.sin(now/150),tx=hx+dir.x*(CELL/2+tl),ty=hy+dir.y*(CELL/2+tl);
+  ctx.strokeStyle=sk.tongue;ctx.lineWidth=2;
   ctx.beginPath();ctx.moveTo(hx+dir.x*(CELL/2-2),hy+dir.y*(CELL/2-2));ctx.lineTo(tx,ty);ctx.stroke();
-  var forkX=dir.y*3,forkY=dir.x*3;
-  ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(tx+forkX-dir.x*2,ty+forkY-dir.y*2);
-  ctx.moveTo(tx,ty);ctx.lineTo(tx-forkX-dir.x*2,ty-forkY-dir.y*2);ctx.stroke();
-}
+  var fkX=dir.y*3,fkY=dir.x*3;
+  ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(tx+fkX-dir.x*2,ty+fkY-dir.y*2);ctx.moveTo(tx,ty);ctx.lineTo(tx-fkX-dir.x*2,ty-fkY-dir.y*2);ctx.stroke();
 
-function hslToRgb(h,s,l){
-  var r,g,b;
-  if(s===0)r=g=b=l;
-  else{
-    var hue2rgb=function(p,q,t){if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};
-    var q=l<0.5?l*(1+s):l+s-l*s,p=2*l-q;
-    r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3);
+  // Particles for fire/lava/thunder/galaxy
+  if((effect==='fire'||effect==='lava'||effect==='thunder'||effect==='galaxy')&&len>0){
+    var spd=(effect==='galaxy')?0.3:1.5;
+    var cnt=(effect==='galaxy')?1:2;
+    var clr=(effect==='fire'||effect==='lava')?'#ff6600':(effect==='thunder'?'#ffff88':'#aaccff');
+    spawnParticles(hx+dir.x*CELL/2,hy+dir.y*CELL/2,clr,cnt,spd);
   }
-  return[Math.floor(r*255),Math.floor(g*255),Math.floor(b*255)];
+
+  // Galaxy orbiting particles
+  if(effect==='galaxy'&&len>0){
+    for(var gi=0;gi<3;gi++){
+      var ang=now/800+gi*Math.PI*2/3,orbR=CELL*0.8;
+      var ox=hx+Math.cos(ang)*orbR,oy=hy+Math.sin(ang)*orbR;
+      ctx.fillStyle='rgba(255,255,255,'+(0.5+0.3*Math.sin(now/300+gi))+')';
+      ctx.beginPath();ctx.arc(ox,oy,2,0,Math.PI*2);ctx.fill();
+    }
+  }
 }
 
-function draw() {
+function draw(){
   ctx.clearRect(0,0,SIZE,SIZE);
-  renderEffects();
+  renderEffects();updateParticles();
 
-  // grid
+  // Particles
+  for(var pi=0;pi<particles.length;pi++){
+    var p=particles[pi];
+    ctx.fillStyle='rgba('+p.color+','+p.life+')';
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx.fill();
+  }
+
+  // Grid
   ctx.strokeStyle='rgba(255,255,255,0.03)';ctx.lineWidth=0.5;
-  for(var i=0;i<=GRID;i++){
-    ctx.beginPath();ctx.moveTo(i*CELL,0);ctx.lineTo(i*CELL,SIZE);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(0,i*CELL);ctx.lineTo(SIZE,i*CELL);ctx.stroke();
-  }
+  for(var i=0;i<=GRID;i++){ctx.beginPath();ctx.moveTo(i*CELL,0);ctx.lineTo(i*CELL,SIZE);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*CELL);ctx.lineTo(SIZE,i*CELL);ctx.stroke()}
 
-  // obstacles
-  for(var oi=0;oi<obstacles.length;oi++){
-    var ob=obstacles[oi];
-    ctx.fillStyle='#444'; ctx.fillRect(ob.x*CELL+3,ob.y*CELL+3,CELL-6,CELL-6);
-    ctx.fillStyle='#555';
-    ctx.fillRect(ob.x*CELL+4,ob.y*CELL+2,CELL-8,3);
-    ctx.fillRect(ob.x*CELL+4,ob.y*CELL+CELL-5,CELL-8,3);
-    ctx.fillStyle='#666';
-    ctx.fillRect(ob.x*CELL+5,ob.y*CELL+5,CELL-10,CELL-10);
-  }
+  // Obstacles
+  for(var oi=0;oi<obstacles.length;oi++){var ob=obstacles[oi];ctx.fillStyle='#444';ctx.fillRect(ob.x*CELL+3,ob.y*CELL+3,CELL-6,CELL-6);ctx.fillStyle='#555';ctx.fillRect(ob.x*CELL+4,ob.y*CELL+2,CELL-8,3);ctx.fillRect(ob.x*CELL+4,ob.y*CELL+CELL-5,CELL-8,3);ctx.fillStyle='#666';ctx.fillRect(ob.x*CELL+5,ob.y*CELL+5,CELL-10,CELL-10)}
 
-  // food
-  if(food){
-    ctx.fillStyle='#e94560';ctx.shadowColor='#e94560';ctx.shadowBlur=10;
-    ctx.beginPath();ctx.arc(food.x*CELL+CELL/2,food.y*CELL+CELL/2,CELL/2-2,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
-  }
+  // Food
+  if(food){ctx.fillStyle='#e94560';ctx.shadowColor='#e94560';ctx.shadowBlur=10;ctx.beginPath();ctx.arc(food.x*CELL+CELL/2,food.y*CELL+CELL/2,CELL/2-2,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0}
 
-  // big food
-  if(bigFood){
-    var el=Date.now()-bigFood.born,rm=Math.max(0,BIG_FOOD_LIFE-el),ratio=rm/BIG_FOOD_LIFE;
-    var radius=(CELL/2-2)*(0.4+0.6*ratio),value=Math.floor(BIG_FOOD_MIN+(BIG_FOOD_MAX-BIG_FOOD_MIN)*ratio);
-    var fcx=bigFood.x*CELL+CELL/2,fcy=bigFood.y*CELL+CELL/2;
-    ctx.shadowColor='#ffd700';ctx.shadowBlur=10+10*ratio;
-    var pulse=1+0.1*Math.sin(Date.now()/200);
-    ctx.strokeStyle='rgba(255,215,0,'+(0.3+0.5*ratio)+')';ctx.lineWidth=2;
-    ctx.beginPath();ctx.arc(fcx,fcy,(radius+4)*pulse,0,Math.PI*2);ctx.stroke();
-    ctx.fillStyle='rgba(255,215,0,'+(0.5+0.5*ratio)+')';ctx.beginPath();ctx.arc(fcx,fcy,radius,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
-    ctx.fillStyle='#fff';ctx.font='bold '+Math.floor(10+4*ratio)+'px "PingFang SC","Segoe UI",sans-serif';
-    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('+'+value,fcx,fcy);
-  }
+  // Big food
+  if(bigFood){var el=Date.now()-bigFood.born,rm=Math.max(0,BIG_FOOD_LIFE-el),ratio=rm/BIG_FOOD_LIFE;var radius=(CELL/2-2)*(0.4+0.6*ratio),value=Math.floor(BIG_FOOD_MIN+(BIG_FOOD_MAX-BIG_FOOD_MIN)*ratio);var fcx=bigFood.x*CELL+CELL/2,fcy=bigFood.y*CELL+CELL/2;ctx.shadowColor='#ffd700';ctx.shadowBlur=10+10*ratio;var pulse=1+0.1*Math.sin(Date.now()/200);ctx.strokeStyle='rgba(255,215,0,'+(0.3+0.5*ratio)+')';ctx.lineWidth=2;ctx.beginPath();ctx.arc(fcx,fcy,(radius+4)*pulse,0,Math.PI*2);ctx.stroke();ctx.fillStyle='rgba(255,215,0,'+(0.5+0.5*ratio)+')';ctx.beginPath();ctx.arc(fcx,fcy,radius,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='bold '+Math.floor(10+4*ratio)+'px "PingFang SC","Segoe UI",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('+'+value,fcx,fcy)}
 
-  // powerup
-  if(powerup){
-    var pel=Date.now()-powerup.born,prm=Math.max(0,POWERUP_LIFE-pel),pratio=prm/POWERUP_LIFE;
-    if(pratio>0){
-      var px=powerup.x*CELL+CELL/2,py=powerup.y*CELL+CELL/2;
-      ctx.globalAlpha = 0.4+0.6*pratio;
-      ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(px,py,CELL/2+2,0,Math.PI*2); ctx.fill();
-      ctx.globalAlpha = pratio;
-      ctx.fillStyle=powerup.type.color; ctx.shadowColor=powerup.type.color; ctx.shadowBlur=12;
-      ctx.beginPath(); ctx.arc(px,py,CELL/2-1,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
-      ctx.fillStyle='#fff'; ctx.font='bold 14px "PingFang SC","Segoe UI",sans-serif';
-      ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(powerup.type.icon,px,py);
-      ctx.globalAlpha=1;
-    }
-  }
+  // Powerup
+  if(powerup){var pel=Date.now()-powerup.born,prm=Math.max(0,POWERUP_LIFE-pel),pratio=prm/POWERUP_LIFE;if(pratio>0){var px=powerup.x*CELL+CELL/2,py=powerup.y*CELL+CELL/2;ctx.globalAlpha=0.4+0.6*pratio;ctx.fillStyle='#000';ctx.beginPath();ctx.arc(px,py,CELL/2+2,0,Math.PI*2);ctx.fill();ctx.globalAlpha=pratio;ctx.fillStyle=powerup.type.color;ctx.shadowColor=powerup.type.color;ctx.shadowBlur=12;ctx.beginPath();ctx.arc(px,py,CELL/2-1,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='bold 14px "PingFang SC","Segoe UI",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(powerup.type.icon,px,py);ctx.globalAlpha=1}}
 
-  // snake(s)
-  if(mode==='single') drawOneSnake(snake,direction,getActiveSkin());
-  else{
-    if(alive1) drawOneSnake(snake1,direction1,getActiveSkin());
-    if(alive2) drawOneSnake(snake2,direction2,'深海蓝');
-  }
+  // Snake(s)
+  if(mode==='single')drawOneSnake(snake,direction,getActiveSkin());
+  else{if(alive1)drawOneSnake(snake1,direction1,getActiveSkin());if(alive2)drawOneSnake(snake2,direction2,'深海蓝')}
 
-  // combo display
-  function showCombo(c, px, py) {
-    if(!c||c.count<2) return;
-    var mul=getComboMultiplier(c);
-    ctx.fillStyle=mul>=5?'#ff4444':mul>=3?'#ffaa00':'#ffff00';
-    ctx.font='bold 20px "PingFang SC","Segoe UI",sans-serif';
-    ctx.textAlign='center';
-    ctx.fillText('COMBO x'+c.count+'!', px, py);
-    ctx.fillStyle='#fff';
-    ctx.font='bold 13px "PingFang SC","Segoe UI",sans-serif';
-    ctx.fillText('分数×'+mul, px, py+20);
-  }
-  if(mode==='single'&&!gameOver) showCombo(combo, SIZE/2, SIZE-30);
-  else if(mode==='dual'){
-    if(alive1) showCombo(combo1, SIZE/2, SIZE-40);
-    if(alive2) showCombo(combo2, SIZE/2, SIZE-15);
-  }
+  // Combo display
+  function sc(c,px,py){if(!c||c.count<2)return;var m=getComboMultiplier(c);ctx.fillStyle=m>=5?'#ff4444':m>=3?'#ffaa00':'#ffff00';ctx.font='bold 20px "PingFang SC","Segoe UI",sans-serif';ctx.textAlign='center';ctx.fillText('COMBO x'+c.count+'!',px,py);ctx.fillStyle='#fff';ctx.font='bold 13px "PingFang SC","Segoe UI",sans-serif';ctx.fillText('×'+m,px,py+20)}
+  if(mode==='single'&&!gameOver)sc(combo,SIZE/2,SIZE-30);
+  else if(mode==='dual'){if(alive1)sc(combo1,SIZE/2,SIZE-40);if(alive2)sc(combo2,SIZE/2,SIZE-15)}
 
-  // game over / death overlay
-  if(mode==='single'&&gameOver){
-    drawOverlay('游戏结束', '空格键重新开始', score);
-  }else if(mode==='dual'&&!alive1&&!alive2){
-    drawOverlay('双蛇阵亡！', '空格键重新开始', Math.max(score1,score2));
-  }else if(mode==='dual'){
-    if(!alive1) drawBanner('🟢 P1 阵亡', 30);
-    if(!alive2) drawBanner('🔵 P2 阵亡', SIZE-20);
-  }
+  // Game over
+  if(mode==='single'&&gameOver)drawOverlay('游戏结束','空格键重新开始',score);
+  else if(mode==='dual'&&!alive1&&!alive2)drawOverlay('双蛇阵亡！','空格键重新开始',Math.max(score1,score2));
+  else if(mode==='dual'){if(!alive1)drawBanner('🟢 P1 阵亡',30);if(!alive2)drawBanner('🔵 P2 阵亡',SIZE-20)}
 
-  // speed indicator
-  function showSpeed(s) {
-    var lv=calcSpeedLevel(s);
-    if(lv>0){
-      ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font='11px "PingFang SC","Segoe UI",sans-serif';
-      ctx.textAlign='left'; ctx.fillText('速度Lv.'+lv+' ×'+calcSpeedMultiplier(s).toFixed(1), 5, SIZE-5);
-    }
-  }
-  if(mode==='single') showSpeed(score);
-  else{
-    if(alive1) showSpeed(score1);
-    else if(alive2) showSpeed(score2);
-  }
+  // Speed indicator
+  function ss(s){var lv=calcSpeedLevel(s);if(lv>0){ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='11px "PingFang SC","Segoe UI",sans-serif';ctx.textAlign='left';ctx.fillText('Lv.'+lv+' ×'+calcSpeedMultiplier(s).toFixed(1),5,SIZE-5)}}
+  if(mode==='single')ss(score);else{if(alive1)ss(score1);else if(alive2)ss(score2)}
 }
 
-function drawOverlay(title, sub, fs) {
-  ctx.fillStyle='rgba(0,0,0,0.65)';ctx.fillRect(0,0,SIZE,SIZE);
-  ctx.fillStyle='#eee';ctx.font='bold 28px "PingFang SC","Segoe UI",sans-serif';ctx.textAlign='center';
-  ctx.fillText(title,SIZE/2,SIZE/2-20);
-  ctx.fillStyle='#ffd700';ctx.font='bold 18px "PingFang SC","Segoe UI",sans-serif';
-  ctx.fillText('最终得分: '+fs,SIZE/2,SIZE/2+15);
-  ctx.fillStyle='#aaa';ctx.font='16px "PingFang SC","Segoe UI",sans-serif';
-  ctx.fillText(sub,SIZE/2,SIZE/2+42);
-}
-function drawBanner(text, y) {
-  ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(0,y-18,SIZE,32);
-  ctx.fillStyle='#e94560'; ctx.font='bold 16px "PingFang SC","Segoe UI",sans-serif'; ctx.textAlign='center';
-  ctx.fillText(text, SIZE/2, y+4);
-}
+function drawOverlay(t,s,fs){ctx.fillStyle='rgba(0,0,0,0.65)';ctx.fillRect(0,0,SIZE,SIZE);ctx.fillStyle='#eee';ctx.font='bold 28px "PingFang SC","Segoe UI",sans-serif';ctx.textAlign='center';ctx.fillText(t,SIZE/2,SIZE/2-20);ctx.fillStyle='#ffd700';ctx.font='bold 18px "PingFang SC","Segoe UI",sans-serif';ctx.fillText('得分: '+fs,SIZE/2,SIZE/2+15);ctx.fillStyle='#aaa';ctx.font='16px "PingFang SC","Segoe UI",sans-serif';ctx.fillText(s,SIZE/2,SIZE/2+42)}
+function drawBanner(t,y){ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(0,y-18,SIZE,32);ctx.fillStyle='#e94560';ctx.font='bold 16px "PingFang SC","Segoe UI",sans-serif';ctx.textAlign='center';ctx.fillText(t,SIZE/2,y+4)}
 
 // ---- Collision ----
-function checkSelfCollision(s) { var h=s[s.length-1]; return s.slice(1,-1).some(function(seg){return seg.x===h.x&&seg.y===h.y;}); }
-function checkSnakeHit(s1,s2) { if(!s2||s2.length===0) return false; var h=s1[s1.length-1]; return s2.some(function(seg){return seg.x===h.x&&seg.y===h.y;}); }
-function hitObstacle(pos) { for(var i=0;i<obstacles.length;i++) if(obstacles[i].x===pos.x&&obstacles[i].y===pos.y) return true; return false; }
-function checkWall(x,y) { return x<0||x>=GRID||y<0||y>=GRID; }
+function checkSelf(s){var h=s[s.length-1];return s.slice(1,-1).some(function(seg){return seg.x===h.x&&seg.y===h.y})}
+function checkHit(s1,s2){if(!s2||s2.length===0)return false;var h=s1[s1.length-1];return s2.some(function(seg){return seg.x===h.x&&seg.y===h.y})}
+function hitObs(p){for(var i=0;i<obstacles.length;i++)if(obstacles[i].x===p.x&&obstacles[i].y===p.y)return true;return false}
+function chkWall(x,y){return x<0||x>=GRID||y<0||y>=GRID}
+function isInv(eff){return(eff.speed&&eff.speed>0&&eff.speed>Date.now())||(eff.ghost&&eff.ghost>Date.now())||(eff.shield&&eff.shield>Date.now())} // Hmm, this isn't right for shield/ghost check.
+
+// Redo: specific checks
+function hasEff(e,r){return e&&e[r]>Date.now()}
+function isInvincible(e){return hasEff(e,'shield')||hasEff(e,'ghost')}
 
 // ---- Process eating ----
-function processEat(isBig, pwrCountRef, comboRef, scoreRef, eatCountRef, scoreElId, effectsRef) {
+function processEat(isBig,pwrCnt,cmb,scr,ec,seId,effRef){
   var now=Date.now();
-  var basePoints = isBig ? Math.floor(BIG_FOOD_MIN+(BIG_FOOD_MAX-BIG_FOOD_MIN)*(Math.max(0,BIG_FOOD_LIFE-(now-bigFood.born))/BIG_FOOD_LIFE)) : 10;
-
-  // combo
-  var inWindow = (now - comboRef.lastEatTime) < COMBO_WINDOW;
-  if (inWindow) comboRef.count++; else comboRef.count=1;
-  comboRef.lastEatTime = now;
-
-  // multipliers: speed × combo
-  var spdMul = calcSpeedMultiplier(scoreRef);
-  var comboMul = getComboMultiplier(comboRef);
-  var points = Math.floor(basePoints * spdMul * comboMul);
-
-  scoreRef += points;
-  updateScoreEl(scoreElId, scoreRef);
-
-  if (!isBig) {
-    eatCountRef++;
-    updateProgressEl(eatCountRef);
-    if(eatCountRef>=5){ eatCountRef=0; updateProgressEl(0); spawnBigFood(); }
-    spawnFood();
-
-    // powerup spawn
-    pwrCountRef++;
-    if(pwrCountRef >= POWERUP_SPAWN_EVERY) { pwrCountRef=0; spawnPowerup(); }
-  } else {
-    bigFood = null;
-  }
-
-  if(comboRef.count>=2 && comboRef.count<=3) showToast('🔥 Combo x'+comboRef.count+'! ×'+comboMul);
-  if(comboRef.count>=5 && comboRef.count<10) showToast('💥 Combo x'+comboRef.count+'! ×'+comboMul);
-  if(comboRef.count>=10) showToast('🌟 MEGA Combo x'+comboRef.count+'! ×'+comboMul);
+  var base=isBig?Math.floor(BIG_FOOD_MIN+(BIG_FOOD_MAX-BIG_FOOD_MIN)*(Math.max(0,BIG_FOOD_LIFE-(now-bigFood.born))/BIG_FOOD_LIFE)):10;
+  var inWin=(now-cmb.lastEatTime)<COMBO_WINDOW;if(inWin)cmb.count++;else cmb.count=1;cmb.lastEatTime=now;
+  var spdMul=calcSpeedMultiplier(scr),comboMul=getComboMultiplier(cmb);
+  var pts=Math.floor(base*spdMul*comboMul);
+  scr+=pts;updateScoreEl(seId,scr);
+  if(!isBig){ec++;updateProgressEl(ec);if(ec>=5){ec=0;updateProgressEl(0);spawnBigFood()}spawnFood();pwrCnt.val++;if(pwrCnt.val>=POWERUP_SPAWN_EVERY){pwrCnt.val=0;spawnPowerup()}}
+  else{bigFood=null}
+  if(cmb.count===2)showToast('🔥 Combo x2!');
+  if(cmb.count===5)showToast('💥 Combo x5!');
+  if(cmb.count===10)showToast('🌟 MEGA Combo!');
 }
 
 // ---- Apply powerup ----
-function applyPowerup(effRef, type, snakeRef) {
+function applyPw(effRef,type,snakeRef){
   var now=Date.now();
-  switch(type.id) {
-    case 'speed': effRef.speed = now + type.dur; showToast('⚡ '+type.name+'！'+type.dur/1000+'秒'); break;
-    case 'ghost': effRef.ghost = now + type.dur; showToast('👻 '+type.name+'！'+type.dur/1000+'秒'); break;
-    case 'shield': effRef.shield = now + type.dur; showToast('🛡️ '+type.name+'！'+type.dur/1000+'秒'); break;
-    case 'shrink':
-      var newLen = Math.max(2, Math.floor(snakeRef.length/2));
-      snakeRef.splice(0, snakeRef.length - newLen);
-      showToast('✂️ '+type.name+'！蛇身减半');
-      break;
+  switch(type.id){
+    case'speed':effRef.speed=now+type.dur;showToast('⚡ 加速！'+type.dur/1000+'s');break;
+    case'ghost':effRef.ghost=now+type.dur;showToast('👻 穿墙！'+type.dur/1000+'s');break;
+    case'shield':effRef.shield=now+type.dur;showToast('🛡️ 护盾！'+type.dur/1000+'s');break;
+    case'shrink':var nl=Math.max(2,Math.floor(snakeRef.length/2));snakeRef.splice(0,snakeRef.length-nl);showToast('✂️ 蛇身减半！');break;
   }
 }
 
-// ---- Has effect ----
-function hasEffect(effRef, name) { return effRef && effRef[name] > Date.now(); }
-function isInvincible(effRef) { return hasEffect(effRef,'shield') || hasEffect(effRef,'ghost'); }
+// ---- Crown check ----
+function chkCrown(scr,msRef,erRef){if(scr>=msRef.val){erRef.val++;msRef.val+=CROWN_EVERY;showToast('👑 获得王冠！(+'+erRef.val+')')}}
 
 // ---- Update ----
-function update() {
-  if(mode==='single') updateSingle();
-  else updateDual();
-  draw();
+function update(){if(mode==='single')upSingle();else upDual();draw()}
+function upSingle(){
+  if(gameOver)return;direction=nextDirection;
+  var hd=snake[snake.length-1],nh={x:hd.x+direction.x,y:hd.y+direction.y};
+  if(!isInvincible(effects)&&chkWall(nh.x,nh.y)){endSingle();return}
+  if(hasEff(effects,'ghost')){nh.x=((nh.x%GRID)+GRID)%GRID;nh.y=((nh.y%GRID)+GRID)%GRID}
+  if(!isInvincible(effects)&&hitObs(nh)){endSingle();return}
+  var efood=food&&nh.x===food.x&&nh.y===food.y;
+  var ebig=bigFood&&nh.x===bigFood.x&&nh.y===bigFood.y;
+  var epw=powerup&&nh.x===powerup.x&&nh.y===powerup.y;
+  snake.push(nh);if(!efood&&!ebig&&!epw)snake.shift();
+  if(!hasEff(effects,'shield')&&checkSelf(snake)){endSingle();return}
+  var pwrRef={val:pwrCount};
+  if(efood){var os=score;processEat(false,pwrRef,combo,score,eatCount,'score',effects);pwrCount=pwrRef.val;var er={val:earnedCrowns},ms={val:crownMilestone};chkCrown(score,ms,er);earnedCrowns=er.val;crownMilestone=ms.val}
+  if(ebig){processEat(true,pwrRef,combo,score,eatCount,'score',effects);pwrCount=pwrRef.val;var er2={val:earnedCrowns},ms2={val:crownMilestone};chkCrown(score,ms2,er2);earnedCrowns=er2.val;crownMilestone=ms2.val}
+  if(epw){applyPw(effects,powerup.type,snake);powerup=null}
+  if(bigFood&&Date.now()-bigFood.born>=BIG_FOOD_LIFE)bigFood=null;
+  if(powerup&&Date.now()-powerup.born>=POWERUP_LIFE)powerup=null;
+  if(score>best){best=score;updateScoreEl('best',best);localStorage.setItem('snakeBest',best)}
+}
+function endSingle(){gameOver=true;if(earnedCrowns>0){addCrowns(earnedCrowns);updateCrownDisplay();buildSkinBars()}if(score>0){var r=addScore(score);renderLB(r.newEntry)}}
+
+function upDual(){
+  var bothDead=true,now=Date.now();
+  function pu(p){
+    if(!p.alive)return;
+    p.direction=p.nextDir;
+    var hd=p.snake[p.snake.length-1],nh={x:hd.x+p.direction.x,y:hd.y+p.direction.y};
+    if(!isInvincible(p.effects)&&chkWall(nh.x,nh.y)){p.alive=false;p.snake=[];return}
+    if(hasEff(p.effects,'ghost')){nh.x=((nh.x%GRID)+GRID)%GRID;nh.y=((nh.y%GRID)+GRID)%GRID}
+    if(!isInvincible(p.effects)&&hitObs(nh)){p.alive=false;p.snake=[];return}
+    var ef=food&&nh.x===food.x&&nh.y===food.y;
+    var eb=bigFood&&nh.x===bigFood.x&&nh.y===bigFood.y;
+    var ep=powerup&&nh.x===powerup.x&&nh.y===powerup.y;
+    p.snake.push(nh);if(!ef&&!eb&&!ep)p.snake.shift();
+    if(!hasEff(p.effects,'shield')&&(checkSelf(p.snake)||checkHit(p.snake,p.other))){p.alive=false;p.snake=[];return}
+    var pwrRef={val:p.pwrCount};
+    if(ef){processEat(false,pwrRef,p.combo,p.score,p.eatCount,p.seId,p.effects);p.pwrCount=pwrRef.val;var er={val:p.earned},ms={val:p.cm};chkCrown(p.score,ms,er);p.earned=er.val;p.cm=ms.val}
+    if(eb){processEat(true,pwrRef,p.combo,p.score,p.eatCount,p.seId,p.effects);p.pwrCount=pwrRef.val;var er2={val:p.earned},ms2={val:p.cm};chkCrown(p.score,ms2,er2);p.earned=er2.val;p.cm=ms2.val}
+    if(ep){applyPw(p.effects,powerup.type,p.snake);powerup=null}
+    if(p.score>best){best=p.score;updateScoreEl('best',best);localStorage.setItem('snakeBest',best)}
+    bothDead=false;
+  }
+
+  // P1 wrapper
+  var p1w={alive:alive1,snake:snake1,direction:direction1,nextDir:nextD1,score:score1,eatCount:eatCount1,pwrCount:pwrCount1,earned:earnedCrowns1,cm:cm1,combo:combo1,effects:effects1,seId:'score1',other:snake2,
+    get alive(){return alive1},set alive(v){alive1=v;if(!v)snake1=[]},
+    get direction(){return direction1},set direction(v){direction1=v},
+    get nextDir(){return nextD1},set nextDir(v){nextD1=v},
+    get score(){return score1},set score(v){score1=v},
+    get eatCount(){return eatCount1},set eatCount(v){eatCount1=v},
+    get pwrCount(){return pwrCount1},set pwrCount(v){pwrCount1=v},
+    get earned(){return earnedCrowns1},set earned(v){earnedCrowns1=v},
+    get cm(){return cm1},set cm(v){cm1=v},
+    get snake(){return snake1},set snake(v){snake1=v},
+    get other(){return snake2},
+    get effects(){return effects1},get combo(){return combo1},get seId(){return'score1'}
+  };
+
+  // P2 wrapper
+  var p2w={alive:alive2,snake:snake2,direction:direction2,nextDir:nextD2,score:score2,eatCount:eatCount2,pwrCount:pwrCount2,earned:earnedCrowns2,cm:cm2,combo:combo2,effects:effects2,seId:'score2',other:snake1,
+    get alive(){return alive2},set alive(v){alive2=v;if(!v)snake2=[]},
+    get direction(){return direction2},set direction(v){direction2=v},
+    get nextDir(){return nextD2},set nextDir(v){nextD2=v},
+    get score(){return score2},set score(v){score2=v},
+    get eatCount(){return eatCount2},set eatCount(v){eatCount2=v},
+    get pwrCount(){return pwrCount2},set pwrCount(v){pwrCount2=v},
+    get earned(){return earnedCrowns2},set earned(v){earnedCrowns2=v},
+    get cm(){return cm2},set cm(v){cm2=v},
+    get snake(){return snake2},set snake(v){snake2=v},
+    get other(){return snake1},
+    get effects(){return effects2},get combo(){return combo2},get seId(){return'score2'}
+  };
+
+  pu(p1w);pu(p2w);
+  if(bigFood&&now-bigFood.born>=BIG_FOOD_LIFE)bigFood=null;
+  if(powerup&&now-powerup.born>=POWERUP_LIFE)powerup=null;
+  if(bothDead){var tot=earnedCrowns1+earnedCrowns2;if(tot>0){addCrowns(tot);updateCrownDisplay();buildSkinBars()}var mx=Math.max(score1,score2);if(mx>0){var r=addScore(mx);renderLB(r.newEntry)}}
 }
 
-// check crown milestone
-function checkCrown(scoreRef, milestoneRef, earnedRef) {
-  if(scoreRef >= milestoneRef) {
-    earnedRef.val++; milestoneRef.val += CROWN_EVERY;
-    showToast('👑 获得王冠！(+'+earnedRef.val+')');
-  }
-}
-
-function updateSingle() {
-  if(gameOver) return;
-  direction = nextDirection;
-
-  // speed boost?
-  var speedMul = hasEffect(effects,'speed') ? 0.5 : 1;
-  // skip frames for slow motion? No, just use speed for tick rate.
-  // Actually speed boost affects the game loop speed, which we handle separately.
-
-  var head=snake[snake.length-1], newHead={x:head.x+direction.x, y:head.y+direction.y};
-
-  // ghost or shield allows wall pass
-  if(!isInvincible(effects) && checkWall(newHead.x,newHead.y)) { endSingle(); return; }
-  if(hasEffect(effects,'ghost')) {
-    newHead.x = ((newHead.x % GRID) + GRID) % GRID;
-    newHead.y = ((newHead.y % GRID) + GRID) % GRID;
-  }
-
-  // obstacle collision (unless invincible)
-  if(!isInvincible(effects) && hitObstacle(newHead)) { endSingle(); return; }
-
-  var eating = food && newHead.x===food.x && newHead.y===food.y;
-  var eatingBig = bigFood && newHead.x===bigFood.x && newHead.y===bigFood.y;
-  var eatingPowerup = powerup && newHead.x===powerup.x && newHead.y===powerup.y;
-
-  snake.push(newHead);
-  if(!eating && !eatingBig && !eatingPowerup) snake.shift();
-
-  // self collision (shield protects)
-  if(!hasEffect(effects,'shield') && checkSelfCollision(snake)) { endSingle(); return; }
-
-  var scoreElId = 'score';
-  if(eating) {
-    var spdMul = calcSpeedMultiplier(score);
-    var oldScore = score;
-    processEat(false, pwrCount, combo, score, eatCount, scoreElId, effects);
-    // score was modified in processEat, need to re-read
-    var earnedRef = {val: earnedCrowns}, msRef = {val: crownMilestone};
-    checkCrown(score, msRef, earnedRef);
-    earnedCrowns = earnedRef.val; crownMilestone = msRef.val;
-  }
-  if(eatingBig) {
-    processEat(true, pwrCount, combo, score, eatCount, scoreElId, effects);
-    var er2={val:earnedCrowns}, ms2={val:crownMilestone};
-    checkCrown(score, ms2, er2);
-    earnedCrowns=er2.val; crownMilestone=ms2.val;
-  }
-  if(eatingPowerup) {
-    applyPowerup(effects, powerup.type, snake);
-    powerup = null;
-  }
-
-  if(bigFood && Date.now()-bigFood.born >= BIG_FOOD_LIFE) bigFood = null;
-  if(powerup && Date.now()-powerup.born >= POWERUP_LIFE) powerup = null;
-
-  if(score>best){ best=score; updateScoreEl('best',best); localStorage.setItem('snakeBest',best); }
-}
-
-function endSingle() {
-  gameOver = true;
-  if(earnedCrowns>0) { addCrowns(earnedCrowns); updateCrownDisplay(); buildSkinBar(); }
-  if(score>0) { var r=addScore(score); renderLB(r.newEntry); }
-}
-
-function updateDual() {
-  var bothDead=true, now=Date.now();
-
-  function playerUpdate(p) {
-    // p: { snake, direction, nextDir, alive, score, eatCount, pwrCount, earnedCrowns, cm,
-    //       combo, effects, scoreElId, checkSelf, otherSnake }
-    if(!p.alive) return;
-    p.direction = p.nextDir;
-    var head=p.snake[p.snake.length-1], nh={x:head.x+p.direction.x, y:head.y+p.direction.y};
-
-    if(!isInvincible(p.effects) && checkWall(nh.x,nh.y)) { p.alive=false; p.snake=[]; return; }
-    if(hasEffect(p.effects,'ghost')) { nh.x=((nh.x%GRID)+GRID)%GRID; nh.y=((nh.y%GRID)+GRID)%GRID; }
-    if(!isInvincible(p.effects) && hitObstacle(nh)) { p.alive=false; p.snake=[]; return; }
-
-    var eatF = food&&nh.x===food.x&&nh.y===food.y;
-    var eatB = bigFood&&nh.x===bigFood.x&&nh.y===bigFood.y;
-    var eatP = powerup&&nh.x===powerup.x&&nh.y===powerup.y;
-
-    p.snake.push(nh);
-    if(!eatF&&!eatB&&!eatP) p.snake.shift();
-
-    if(!hasEffect(p.effects,'shield') && (checkSelfCollision(p.snake)||checkSnakeHit(p.snake,p.otherSnake))) {
-      p.alive=false; p.snake=[]; return;
-    }
-
-    if(eatF){ processEat(false,p.pwrCount,p.combo,p.score,p.eatCount,p.scoreElId,p.effects);
-      var er={val:p.earnedCrowns},ms={val:p.cm}; checkCrown(p.score,ms,er); p.earnedCrowns=er.val;p.cm=ms.val; }
-    if(eatB){ processEat(true,p.pwrCount,p.combo,p.score,p.eatCount,p.scoreElId,p.effects);
-      var er2={val:p.earnedCrowns},ms2={val:p.cm}; checkCrown(p.score,ms2,er2); p.earnedCrowns=er2.val;p.cm=ms2.val; }
-    if(eatP){ applyPowerup(p.effects,powerup.type,p.snake); powerup=null; }
-
-    if(p.score>best){ best=p.score; updateScoreEl('best',best); localStorage.setItem('snakeBest',best); }
-
-    bothDead = false;
-  }
-
-  playerUpdate({
-    snake:snake1, direction:direction1, nextDir:nextD1, alive:alive1,
-    score:score1, eatCount:eatCount1, pwrCount:pwrCount1,
-    earnedCrowns:earnedCrowns1, cm:cm1, combo:combo1, effects:effects1,
-    scoreElId:'score1', otherSnake:snake2,
-    get direction() { return direction1; }, set direction(v) { direction1=v; },
-    get nextDir() { return nextD1; }, set nextDir(v) { nextD1=v; },
-    get alive() { return alive1; }, set alive(v) { alive1=v; snake1=v?snake1:[]; },
-    get score() { return score1; }, set score(v) { score1=v; },
-    get eatCount() { return eatCount1; }, set eatCount(v) { eatCount1=v; },
-    get pwrCount() { return pwrCount1; }, set pwrCount(v) { pwrCount1=v; },
-    get earnedCrowns() { return earnedCrowns1; }, set earnedCrowns(v) { earnedCrowns1=v; },
-    get cm() { return cm1; }, set cm(v) { cm1=v; },
-    get combo() { return combo1; },
-    get effects() { return effects1; },
-    get snake() { return snake1; }, set snake(v) { snake1=v; },
-    get otherSnake() { return snake2; }
-  });
-
-  playerUpdate({
-    snake:snake2, direction:direction2, nextDir:nextD2, alive:alive2,
-    score:score2, eatCount:eatCount2, pwrCount:pwrCount2,
-    earnedCrowns:earnedCrowns2, cm:cm2, combo:combo2, effects:effects2,
-    scoreElId:'score2', otherSnake:snake1,
-    get direction() { return direction2; }, set direction(v) { direction2=v; },
-    get nextDir() { return nextD2; }, set nextDir(v) { nextD2=v; },
-    get alive() { return alive2; }, set alive(v) { alive2=v; snake2=v?snake2:[]; },
-    get score() { return score2; }, set score(v) { score2=v; },
-    get eatCount() { return eatCount2; }, set eatCount(v) { eatCount2=v; },
-    get pwrCount() { return pwrCount2; }, set pwrCount(v) { pwrCount2=v; },
-    get earnedCrowns() { return earnedCrowns2; }, set earnedCrowns(v) { earnedCrowns2=v; },
-    get cm() { return cm2; }, set cm(v) { cm2=v; },
-    get combo() { return combo2; },
-    get effects() { return effects2; },
-    get snake() { return snake2; }, set snake(v) { snake2=v; },
-    get otherSnake() { return snake1; }
-  });
-
-  if(bigFood && now-bigFood.born>=BIG_FOOD_LIFE) bigFood=null;
-  if(powerup && now-powerup.born>=POWERUP_LIFE) powerup=null;
-
-  if(bothDead){
-    var total=earnedCrowns1+earnedCrowns2;
-    if(total>0){ addCrowns(total); updateCrownDisplay(); buildSkinBar(); }
-    var mx=Math.max(score1,score2);
-    if(mx>0){ var r=addScore(mx); renderLB(r.newEntry); }
-  }
-}
-
-// ---- Loop (speed varies) ----
-function loop() {
-  update();
-  var spd;
-  if(mode==='single') {
-    spd = calcSpeed(score);
-    if(hasEffect(effects,'speed')) spd = Math.floor(spd/2);
-  } else {
-    var s1 = alive1 ? calcSpeed(score1) : BASE_SPEED;
-    var s2 = alive2 ? calcSpeed(score2) : BASE_SPEED;
-    if(alive1 && hasEffect(effects1,'speed')) s1 = Math.floor(s1/2);
-    if(alive2 && hasEffect(effects2,'speed')) s2 = Math.floor(s2/2);
-    spd = Math.min(s1, s2);
-  }
-  gameLoop = setTimeout(function(){ requestAnimationFrame(loop); }, spd);
-}
+// ---- Loop ----
+function loop(){update();var spd;if(mode==='single'){spd=calcSpeed(score);if(hasEff(effects,'speed'))spd=Math.floor(spd/2)}else{var s1=alive1?calcSpeed(score1):BASE_SPEED,s2=alive2?calcSpeed(score2):BASE_SPEED;if(alive1&&hasEff(effects1,'speed'))s1=Math.floor(s1/2);if(alive2&&hasEff(effects2,'speed'))s2=Math.floor(s2/2);spd=Math.min(s1,s2)}gameLoop=setTimeout(function(){requestAnimationFrame(loop)},spd)}
 
 // ---- Input ----
-document.addEventListener('keydown', function(e) {
-  if(e.code==='Space') { e.preventDefault(); clearTimeout(gameLoop); initGame(); draw(); loop(); return; }
-  if(mode==='single') {
-    if(gameOver) return;
-    var map={ArrowUp:DIR.UP,ArrowDown:DIR.DOWN,ArrowLeft:DIR.LEFT,ArrowRight:DIR.RIGHT,KeyW:DIR.UP,KeyS:DIR.DOWN,KeyA:DIR.LEFT,KeyD:DIR.RIGHT};
-    var dir=map[e.code]; if(!dir) return;
-    e.preventDefault();
-    if(dir.x+direction.x===0&&dir.y+direction.y===0) return;
-    nextDirection=dir;
-  } else {
-    var m1={KeyW:DIR.UP,KeyS:DIR.DOWN,KeyA:DIR.LEFT,KeyD:DIR.RIGHT};
-    var m2={ArrowUp:DIR.UP,ArrowDown:DIR.DOWN,ArrowLeft:DIR.LEFT,ArrowRight:DIR.RIGHT};
-    if(alive1&&m1[e.code]){e.preventDefault();var d1=m1[e.code];if(!(d1.x+direction1.x===0&&d1.y+direction1.y===0))nextD1=d1;}
-    if(alive2&&m2[e.code]){e.preventDefault();var d2=m2[e.code];if(!(d2.x+direction2.x===0&&d2.y+direction2.y===0))nextD2=d2;}
-  }
+document.addEventListener('keydown',function(e){
+  if(e.code==='Space'){e.preventDefault();clearTimeout(gameLoop);trail=[];particles=[];initGame();draw();loop();return}
+  if(mode==='single'){if(gameOver)return;var map={ArrowUp:DIR.UP,ArrowDown:DIR.DOWN,ArrowLeft:DIR.LEFT,ArrowRight:DIR.RIGHT,KeyW:DIR.UP,KeyS:DIR.DOWN,KeyA:DIR.LEFT,KeyD:DIR.RIGHT};var dir=map[e.code];if(!dir)return;e.preventDefault();if(dir.x+direction.x===0&&dir.y+direction.y===0)return;nextDirection=dir}
+  else{var m1={KeyW:DIR.UP,KeyS:DIR.DOWN,KeyA:DIR.LEFT,KeyD:DIR.RIGHT};var m2={ArrowUp:DIR.UP,ArrowDown:DIR.DOWN,ArrowLeft:DIR.LEFT,ArrowRight:DIR.RIGHT};if(alive1&&m1[e.code]){e.preventDefault();var d1=m1[e.code];if(!(d1.x+direction1.x===0&&d1.y+direction1.y===0))nextD1=d1}if(alive2&&m2[e.code]){e.preventDefault();var d2=m2[e.code];if(!(d2.x+direction2.x===0&&d2.y+direction2.y===0))nextD2=d2}}
 });
-
-document.getElementById('restart').addEventListener('click',function(){clearTimeout(gameLoop);initGame();draw();loop();});
+document.getElementById('restart').addEventListener('click',function(){clearTimeout(gameLoop);trail=[];particles=[];initGame();draw();loop()});
 
 // ---- Init ----
-renderLB();
-buildSkinBar();
-updateCrownDisplay();
-initGame();
-if(mode==='single'){
-  hintEl.innerHTML='方向键 / WASD 控制 | 空格键重新开始';
-}else{
-  hintEl.innerHTML='🟢P1: WASD &nbsp;|&nbsp; 🔵P2: ↑↓←→ &nbsp;|&nbsp; 空格键重新开始';
-}
-draw();
-loop();
+renderLB();buildSkinBars();updateCrownDisplay();updateDiamondDisplay();initGame();
+if(mode==='single')hintEl.innerHTML='方向键 / WASD 控制 | 空格键重新开始';
+else hintEl.innerHTML='🟢P1: WASD | 🔵P2: ↑↓←→ | 空格键重新开始';
+draw();loop();
 </script>
 </body>
 </html>
