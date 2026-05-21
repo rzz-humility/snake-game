@@ -94,6 +94,13 @@ button.restart-btn:hover{background:#1a4a8a}
 <div class="control-bar">
 <div class="mode-toggle"><button id="btnSingle" class="active">单人</button><button id="btnDual">双人</button></div>
 <button class="opt-btn" id="btnObstacle">障碍物：关</button>
+<select id="mapSelect" style="padding:8px 12px;font-size:13px;border:2px solid #0f3460;border-radius:8px;background:#16213e;color:#ffd700;cursor:pointer">
+  <option value="标准">🗺 标准</option>
+  <option value="空旷">🏞 空旷</option>
+  <option value="迷宫">🏛 迷宫</option>
+  <option value="边框">🔲 边框</option>
+  <option value="十字">✚ 十字</option>
+</select>
 </div>
 <div class="effects-bar" id="effectsBar"></div>
 <canvas id="canvas"></canvas>
@@ -114,12 +121,12 @@ var btnSingle=document.getElementById('btnSingle'),btnDual=document.getElementBy
 var btnObstacle=document.getElementById('btnObstacle');
 var skinBar=document.getElementById('skinBar'),premiumBar=document.getElementById('premiumBar');
 
-var GRID=20,CELL=25,SIZE=GRID*CELL;canvas.width=SIZE;canvas.height=SIZE;
+var GRID=30,CELL=20,SIZE=GRID*CELL;canvas.width=SIZE;canvas.height=SIZE;
 var DIR={UP:{x:0,y:-1},DOWN:{x:0,y:1},LEFT:{x:-1,y:0},RIGHT:{x:1,y:0}};
 var BIG_FOOD_LIFE=5000,BIG_FOOD_MAX=50,BIG_FOOD_MIN=10;
 var CROWN_EVERY=100,UNLOCK_COST=3;
 var BASE_SPEED=130,MIN_SPEED=55;
-var COMBO_WINDOW=3000,POWERUP_LIFE=8000,POWERUP_SPAWN_EVERY=5,OBSTACLE_COUNT=10;
+var COMBO_WINDOW=3000,POWERUP_LIFE=8000,POWERUP_SPAWN_EVERY=5,OBSTACLE_COUNT=18;
 
 // ---- Skins ----
 var REGULAR_SKINS={
@@ -262,10 +269,18 @@ var toastTimer=null;
 function showToast(msg){toast.textContent=msg;toast.classList.remove('show');void toast.offsetWidth;toast.classList.add('show');if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(function(){toast.classList.remove('show')},2000)}
 
 // ---- Settings ----
-var mode='single',obstacleMode=false;
+var mode='single',obstacleMode=false,currentMap='标准';
+var MAPS={
+  '标准':{name:'标准',desc:'随机障碍物',gen:'random'},
+  '空旷':{name:'空旷',desc:'无障碍物',gen:'empty'},
+  '迷宫':{name:'迷宫',desc:'密集迷宫墙',gen:'maze'},
+  '边框':{name:'边框',desc:'四周环绕障碍',gen:'border'},
+  '十字':{name:'十字',desc:'十字障碍阵',gen:'cross'},
+};
 btnSingle.addEventListener('click',function(){switchMode('single')});
 btnDual.addEventListener('click',function(){switchMode('dual')});
 btnObstacle.addEventListener('click',function(){obstacleMode=!obstacleMode;btnObstacle.textContent='障碍物：'+(obstacleMode?'开':'关');btnObstacle.className='opt-btn'+(obstacleMode?' active':'');clearTimeout(gameLoop);initGame();draw();loop()});
+document.getElementById('mapSelect').addEventListener('change',function(){currentMap=this.value;obstacleMode=true;btnObstacle.textContent='障碍物：开';btnObstacle.className='opt-btn active';clearTimeout(gameLoop);initGame();draw();loop()});
 function switchMode(m){if(mode===m)return;mode=m;btnSingle.className=m==='single'?'active':'';btnDual.className=m==='dual'?'active':'';clearTimeout(gameLoop);initGame();draw();loop()}
 
 function updateAllDisplays(){
@@ -346,20 +361,40 @@ function initGame(){
     updateScoreEl('score',0);updateProgressEl(0);
   }else{
     snake1=[{x:3,y:3},{x:2,y:3},{x:1,y:3}];direction1=DIR.RIGHT;nextD1=DIR.RIGHT;score1=0;alive1=true;eatCount1=0;pwrCount1=0;earnedCrowns1=0;cm1=CROWN_EVERY;combo1={count:0,lastEatTime:0};effects1=makeEffects();
-    snake2=[{x:16,y:16},{x:17,y:16},{x:18,y:16}];direction2=DIR.LEFT;nextD2=DIR.LEFT;score2=0;alive2=true;eatCount2=0;pwrCount2=0;earnedCrowns2=0;cm2=CROWN_EVERY;combo2={count:0,lastEatTime:0};effects2=makeEffects();
+    snake2=[{x:25,y:25},{x:26,y:25},{x:27,y:25}];direction2=DIR.LEFT;nextD2=DIR.LEFT;score2=0;alive2=true;eatCount2=0;pwrCount2=0;earnedCrowns2=0;cm2=CROWN_EVERY;combo2={count:0,lastEatTime:0};effects2=makeEffects();
     updateScoreEl('score1',0);updateScoreEl('score2',0);updateProgressEl(0);
   }
   spawnFood();
 }
 
 function generateObstacles(){
-  obstacles=[];var occ=new Set();
+  obstacles=[];
+  var map=MAPS[currentMap];
+  if(map.gen==='empty')return;
+
+  var occ=new Set();
   function add(s){if(s)for(var i=0;i<s.length;i++)occ.add(s[i].x+','+s[i].y)}
   if(mode==='single')add(snake);else{add(snake1);add(snake2)}
   if(food)occ.add(food.x+','+food.y);
-  var free=[];for(var x=0;x<GRID;x++)for(var y=0;y<GRID;y++)if(!occ.has(x+','+y))free.push({x:x,y:y});
-  var n=Math.min(OBSTACLE_COUNT,free.length);
-  for(var i=0;i<n;i++){var idx=Math.floor(Math.random()*free.length);obstacles.push(free[idx]);free.splice(idx,1)}
+
+  if(map.gen==='border'){
+    for(var i=0;i<GRID;i++){if(!occ.has(i+',0'))obstacles.push({x:i,y:0});if(!occ.has(i+','+(GRID-1)))obstacles.push({x:i,y:GRID-1})}
+    for(var i=1;i<GRID-1;i++){if(!occ.has('0,'+i))obstacles.push({x:0,y:i});if(!occ.has((GRID-1)+','+i))obstacles.push({x:GRID-1,y:i})}
+  }else if(map.gen==='cross'){
+    var cx=Math.floor(GRID/2),cy=Math.floor(GRID/2);
+    for(var i=3;i<GRID-3;i++){if(i!==cx&&!occ.has(i+','+cy))obstacles.push({x:i,y:cy});if(i!==cy&&!occ.has(cx+','+i))obstacles.push({x:cx,y:i})}
+  }else if(map.gen==='maze'){
+    // sparse maze: grid of pillars with gaps
+    for(var i=2;i<GRID-2;i+=4)for(var j=2;j<GRID-2;j+=4){
+      if(!occ.has(i+','+j))obstacles.push({x:i,y:j});
+      if(i+2<GRID-2&&!occ.has((i+2)+','+j))obstacles.push({x:i+2,y:j});
+    }
+  }else{
+    // random
+    var free=[];for(var x=0;x<GRID;x++)for(var y=0;y<GRID;y++)if(!occ.has(x+','+y))free.push({x:x,y:y});
+    var n=Math.min(OBSTACLE_COUNT,free.length);
+    for(var i=0;i<n;i++){var idx=Math.floor(Math.random()*free.length);obstacles.push(free[idx]);free.splice(idx,1)}
+  }
 }
 
 function updateScoreEl(id,val){var el=document.getElementById(id);if(el)el.textContent=val}
