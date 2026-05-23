@@ -439,11 +439,11 @@ function drawOneSnake(snakeArr,dir,skinName){
   if(effect==='phantom'&&len>0){
     var head=snakeArr[len-1];
     trail.push({x:head.x*CELL+CELL/2,y:head.y*CELL+CELL/2,life:1});
-    if(trail.length>8)trail.shift();
+    if(trail.length>10)trail.shift();
     for(var ti=0;ti<trail.length;ti++){
-      trail[ti].life-=0.12;
+      trail[ti].life-=0.1;
       if(trail[ti].life>0){
-        ctx.fillStyle='rgba(180,200,240,'+(trail[ti].life*0.3)+')';
+        ctx.fillStyle='rgba(180,200,240,'+(trail[ti].life*0.25)+')';
         ctx.beginPath();ctx.arc(trail[ti].x,trail[ti].y,(CELL/2-2)*trail[ti].life,0,Math.PI*2);ctx.fill();
       }
     }
@@ -458,80 +458,173 @@ function drawOneSnake(snakeArr,dir,skinName){
     }
   }
 
-  // Draw body segments
+  // ---- Build body spine with undulation ----
+  var halfW=CELL*0.35;
+  var spine=[];
   for(var j=0;j<len;j++){
-    var seg=snakeArr[j],cx=seg.x*CELL+CELL/2,cy=seg.y*CELL+CELL/2;
-    var isHead=(j===len-1),isTail=(j===0),t=j/Math.max(len-1,1);
-    var R,G,B;
-    if(isRainbow){var rgb=hslToRgb(((j*30+now/50)%360)/360,0.8,0.5+0.3*t);R=rgb[0];G=rgb[1];B=rgb[2]}
-    else{R=Math.floor(sk.tailR+(sk.headR-sk.tailR)*t);G=Math.floor(sk.tailG+(sk.headG-sk.tailG)*t);B=Math.floor(sk.tailB+(sk.headB-sk.tailB)*t)}
+    var seg=snakeArr[j],t=j/Math.max(len-1,1);
+    var cx=seg.x*CELL+CELL/2,cy=seg.y*CELL+CELL/2;
 
-    // Lava cracks
-    if(effect==='lava'&&!isHead&&j%3===0){
-      var lr=Math.max(0,R+40),lg=Math.max(0,G-20),lb=Math.max(0,B-30);
-      ctx.fillStyle='rgb('+Math.min(255,lr)+','+Math.min(255,lg+20)+','+lb+')';
-      ctx.beginPath();ctx.arc(cx+Math.sin(j*2.5)*3,cy+Math.cos(j*3)*3,CELL/6,0,Math.PI*2);ctx.fill();
-    }
-    // Thunder cracks
-    if(effect==='thunder'&&!isHead&&j%4===0){
-      ctx.strokeStyle='rgba(255,255,200,'+(0.4+0.3*Math.sin(now/100+j))+')';ctx.lineWidth=1.5;
-      ctx.beginPath();ctx.moveTo(cx-5,cy-3);ctx.lineTo(cx+2,cy-1);ctx.lineTo(cx-2,cy+2);ctx.lineTo(cx+5,cy+4);ctx.stroke();
-    }
+    // width: narrow tail → widest at 70% → slightly narrower head
+    var wMul;
+    if(j===0) wMul=0.15;           // tail tip
+    else if(j===1) wMul=0.3;
+    else if(j===2) wMul=0.5;
+    else if(j>=len-2) wMul=0.9;    // head area slightly narrower than body
+    else wMul=0.6+0.4*Math.min(1,(j-2)/(len*0.6));
 
-    var r=isHead?CELL/2-2:(isTail?CELL/3:CELL/2.4);
-    ctx.fillStyle='rgb('+R+','+G+','+B+')';ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,'+(0.08+0.07*t)+')';ctx.beginPath();ctx.arc(cx-2,cy-r*0.3,r*0.55,0,Math.PI*2);ctx.fill();
+    // perpendicular direction
+    var pdx=0,pdy=0;
+    if(j<len-1){var nxt=snakeArr[j+1];pdx=nxt.x-seg.x;pdy=nxt.y-seg.y}
+    else if(j>0){var prv=snakeArr[j-1];pdx=seg.x-prv.x;pdy=seg.y-prv.y}
+    var plen=Math.sqrt(pdx*pdx+pdy*pdy)||1;
+    var perpX=-pdy/plen,perpY=pdx/plen;
+
+    // undulation: sine wave offset (strongest in middle of body)
+    var undMid=1-Math.abs(t-0.5)*2; // 1 at middle, 0 at ends
+    var undOff=Math.sin(now/180+j*0.7)*halfW*0.35*undMid;
+    cx+=perpX*undOff;cy+=perpY*undOff;
+
+    spine.push({cx:cx,cy:cy,w:halfW*wMul,perpX:perpX,perpY:perpY,t:t});
   }
 
-  // Connect segments
-  ctx.lineCap='round';
-  for(var k=0;k<len-1;k++){
-    var a=snakeArr[k],b=snakeArr[k+1],ax=a.x*CELL+CELL/2,ay=a.y*CELL+CELL/2,bx=b.x*CELL+CELL/2,by=b.y*CELL+CELL/2;
-    var tk=k/Math.max(len-1,1),RR,GG,BB;
-    if(isRainbow){var rgb2=hslToRgb(((k*30+now/50)%360)/360,0.8,0.5+0.3*tk);RR=rgb2[0];GG=rgb2[1];BB=rgb2[2]}
-    else{RR=Math.floor(sk.tailR+(sk.headR-sk.tailR)*tk);GG=Math.floor(sk.tailG+(sk.headG-sk.tailG)*tk);BB=Math.floor(sk.tailB+(sk.headB-sk.tailB)*tk)}
-    ctx.strokeStyle='rgb('+RR+','+GG+','+BB+')';ctx.lineWidth=CELL*0.78;
-    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
-    ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=CELL*0.3;
-    ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);ctx.stroke();
+  // ---- Draw filled body path (left side → right side) ----
+  ctx.beginPath();
+  // go forward along left edge
+  for(var j=0;j<len;j++){
+    var p=spine[j];
+    var lx=p.cx-p.perpX*p.w,ly=p.cy-p.perpY*p.w;
+    if(j===0)ctx.moveTo(lx,ly);else ctx.lineTo(lx,ly);
+  }
+  // go backward along right edge
+  for(var j=len-1;j>=0;j--){
+    var p=spine[j];
+    var rx=p.cx+p.perpX*p.w,ry=p.cy+p.perpY*p.w;
+    ctx.lineTo(rx,ry);
+  }
+  ctx.closePath();
+
+  // Fill body with gradient
+  var grad=ctx.createLinearGradient(0,SIZE*0.2,0,SIZE*0.8);
+  for(var j=0;j<len;j++){
+    var p=spine[j],t=p.t,R,G,B;
+    if(isRainbow){var rgb=hslToRgb(((j*30+now/50)%360)/360,0.8,0.45+0.35*t);R=rgb[0];G=rgb[1];B=rgb[2]}
+    else{var rDark=0.55,rMid=0.75;R=Math.floor(sk.tailR*(1-t*rDark)+sk.headR*t*rMid);G=Math.floor(sk.tailG*(1-t*rDark)+sk.headG*t*rMid);B=Math.floor(sk.tailB*(1-t*rDark)+sk.headB*t*rMid)}
+    if(j===0||j===len-1||j%5===0){
+      var pos=t;
+      try{grad.addColorStop(pos,'rgb('+R+','+G+','+B+')')}catch(e){}
+    }
+  }
+  ctx.fillStyle=grad;ctx.fill();
+
+  // -- dark outline --
+  ctx.strokeStyle='rgba(0,0,0,0.25)';ctx.lineWidth=1.2;ctx.stroke();
+
+  // ---- Belly stripe (lighter underside) ----
+  ctx.beginPath();
+  for(var j=Math.floor(len*0.2);j<len-1;j++){
+    var p=spine[j];
+    var bx=p.cx+p.perpX*p.w*0.2,by=p.cy+p.perpY*p.w*0.2;
+    if(j===Math.floor(len*0.2))ctx.moveTo(bx,by);else ctx.lineTo(bx,by);
+  }
+  for(var j=len-2;j>=Math.floor(len*0.2);j--){
+    var p=spine[j];
+    var bx=p.cx+p.perpX*p.w*0.6,by=p.cy+p.perpY*p.w*0.6;
+    ctx.lineTo(bx,by);
+  }
+  ctx.closePath();
+  ctx.fillStyle='rgba(255,255,220,0.15)';ctx.fill();
+
+  // ---- Scale/diamond pattern on back ----
+  for(var j=0;j<len-1;j+=2){
+    var p=spine[j];
+    var scx=p.cx-p.perpX*p.w*0.25,scy=p.cy-p.perpY*p.w*0.25;
+    var sr=p.w*0.4;
+    ctx.fillStyle='rgba(0,0,0,0.12)';
+    ctx.beginPath();
+    ctx.moveTo(scx-p.perpX*sr,scy-p.perpY*sr);
+    ctx.lineTo(scx+p.perpY*sr*0.6,scy-p.perpX*sr*0.6);
+    ctx.lineTo(scx+p.perpX*sr*0.3,scy+p.perpY*sr*0.3);
+    ctx.lineTo(scx-p.perpY*sr*0.6,scy+p.perpX*sr*0.6);
+    ctx.closePath();ctx.fill();
   }
 
-  // Head
+  // ---- Lava/thunder effects ----
+  for(var j=0;j<len;j++){
+    var p=spine[j];
+    if(effect==='lava'&&j%3===0&&j<len-1){
+      ctx.fillStyle='rgba(255,150,20,'+(0.3+0.3*Math.sin(now/200+j))+')';
+      ctx.beginPath();ctx.arc(p.cx+Math.sin(j*2.5)*3,p.cy+Math.cos(j*3)*3,p.w*0.4,0,Math.PI*2);ctx.fill();
+    }
+    if(effect==='thunder'&&j%4===0&&j<len-1){
+      ctx.strokeStyle='rgba(255,255,200,'+(0.3+0.3*Math.sin(now/100+j))+')';ctx.lineWidth=1.2;
+      ctx.beginPath();ctx.moveTo(p.cx-4,p.cy-2);ctx.lineTo(p.cx+2,p.cy);ctx.lineTo(p.cx-1,p.cy+2);ctx.lineTo(p.cx+4,p.cy+3);ctx.stroke();
+    }
+  }
+
+  // ---- Head (diamond/arrow shape) ----
   var hd=snakeArr[len-1],hx=hd.x*CELL+CELL/2,hy=hd.y*CELL+CELL/2;
-  ctx.fillStyle=sk.headOverride;ctx.beginPath();ctx.ellipse(hx,hy,CELL/2-1,CELL/2-3,0,0,Math.PI*2);ctx.fill();
+  var hp=spine[len-1];
+  // head shape: triangle pointing forward, rounded back
+  var tipX=hx+dir.x*CELL*0.55,tipY=hy+dir.y*CELL*0.55;
+  var baseX=hx-dir.x*CELL*0.15,baseY=hy-dir.y*CELL*0.15;
+  var pX=dir.y*CELL*0.35,pY=dir.x*CELL*0.35;
 
-  // Eyes
-  var eyeOffX=0,eyeOffY=0;
-  if(dir.x===1){eyeOffX=4}else if(dir.x===-1){eyeOffX=-4}else if(dir.y===-1){eyeOffY=-4}else{eyeOffY=4}
-  var perpX=dir.y*5,perpY=dir.x*5;
+  ctx.fillStyle=sk.headOverride;
+  ctx.beginPath();
+  ctx.moveTo(tipX,tipY);                                    // nose tip
+  ctx.lineTo(hx+dir.x*CELL*0.15+pX,hy+dir.y*CELL*0.15+pY); // right cheek
+  ctx.lineTo(baseX+pX*0.8,baseY+pY*0.8);                    // right jaw
+  ctx.quadraticCurveTo(baseX,baseY+CELL*0.2,baseX-pX*0.8,baseY-pY*0.8); // chin curve
+  ctx.lineTo(hx+dir.x*CELL*0.15-pX,hy+dir.y*CELL*0.15-pY); // left cheek
+  ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=1;ctx.stroke();
+
+  // Nostrils
+  for(var ns=-1;ns<=1;ns+=2){
+    var ntx=tipX-dir.x*4+pX*ns*0.3,nty=tipY-dir.y*4+pY*ns*0.3;
+    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.beginPath();ctx.arc(ntx,nty,1.2,0,Math.PI*2);ctx.fill();
+  }
+
+  // ---- Eyes with slit pupils ----
+  var eyeX=hx+dir.x*2,eyeY=hy+dir.y*2;
   for(var side=-1;side<=1;side+=2){
-    var ex=hx+eyeOffX+perpX*side,ey=hy+eyeOffY+perpY*side;
-    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ex,ey,4,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#111';ctx.beginPath();ctx.arc(ex+dir.x*1.5,ey+dir.y*1.5,2,0,Math.PI*2);ctx.fill();
+    var ex=eyeX+dir.y*5*side,ey=eyeY+dir.x*5*side;
+    // eye socket (darker oval)
+    ctx.fillStyle='rgba(0,0,0,0.3)';ctx.beginPath();ctx.ellipse(ex,ey,5,3.5,0,0,Math.PI*2);ctx.fill();
+    // eye white
+    ctx.fillStyle='#ffd';ctx.beginPath();ctx.ellipse(ex,ey,3.5,2.8,0,0,Math.PI*2);ctx.fill();
+    // slit pupil (vertical)
+    ctx.fillStyle='#111';
+    if(dir.x!==0){ctx.fillRect(ex-0.8,ey-3,1.6,6)}else{ctx.fillRect(ex-3,ey-0.8,6,1.6)}
+    // eye highlight
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ex+dir.x*1.5,ey+dir.y*1.5,1,0,Math.PI*2);ctx.fill();
   }
 
-  // Tongue
-  var tl=10+3*Math.sin(now/150),tx=hx+dir.x*(CELL/2+tl),ty=hy+dir.y*(CELL/2+tl);
-  ctx.strokeStyle=sk.tongue;ctx.lineWidth=2;
-  ctx.beginPath();ctx.moveTo(hx+dir.x*(CELL/2-2),hy+dir.y*(CELL/2-2));ctx.lineTo(tx,ty);ctx.stroke();
-  var fkX=dir.y*3,fkY=dir.x*3;
-  ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(tx+fkX-dir.x*2,ty+fkY-dir.y*2);ctx.moveTo(tx,ty);ctx.lineTo(tx-fkX-dir.x*2,ty-fkY-dir.y*2);ctx.stroke();
+  // ---- Tongue (forked, longer, thinner) ----
+  var tongueLen=12+4*Math.sin(now/130);
+  var tStartX=hx+dir.x*CELL*0.45,tStartY=hy+dir.y*CELL*0.45;
+  var tEndX=tStartX+dir.x*tongueLen,tEndY=tStartY+dir.y*tongueLen;
+  ctx.strokeStyle=sk.tongue;ctx.lineWidth=1.5;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(tStartX,tStartY);ctx.lineTo(tEndX,tEndY);ctx.stroke();
+  // fork
+  var fLen=5,fSpread=3.5;
+  var fkX=dir.y*fSpread,fkY=dir.x*fSpread;
+  var fTipX=tEndX+dir.x*fLen,fTipY=tEndY+dir.y*fLen;
+  ctx.beginPath();ctx.moveTo(tEndX,tEndY);ctx.lineTo(fTipX+fkX,fTipY+fkY);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(tEndX,tEndY);ctx.lineTo(fTipX-fkX,fTipY-fkY);ctx.stroke();
 
-  // Particles for fire/lava/thunder/galaxy
+  // ---- Particles ----
   if((effect==='fire'||effect==='lava'||effect==='thunder'||effect==='galaxy')&&len>0){
-    var spd=(effect==='galaxy')?0.3:1.5;
-    var cnt=(effect==='galaxy')?1:2;
+    var spd=(effect==='galaxy')?0.3:1.5,cnt=(effect==='galaxy')?1:2;
     var clr=(effect==='fire'||effect==='lava')?'#ff6600':(effect==='thunder'?'#ffff88':'#aaccff');
-    spawnParticles(hx+dir.x*CELL/2,hy+dir.y*CELL/2,clr,cnt,spd);
+    spawnParticles(tipX,tipY,clr,cnt,spd);
   }
-
-  // Galaxy orbiting particles
   if(effect==='galaxy'&&len>0){
     for(var gi=0;gi<3;gi++){
       var ang=now/800+gi*Math.PI*2/3,orbR=CELL*0.8;
       var ox=hx+Math.cos(ang)*orbR,oy=hy+Math.sin(ang)*orbR;
-      ctx.fillStyle='rgba(255,255,255,'+(0.5+0.3*Math.sin(now/300+gi))+')';
-      ctx.beginPath();ctx.arc(ox,oy,2,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,'+(0.5+0.3*Math.sin(now/300+gi))+')';ctx.beginPath();ctx.arc(ox,oy,2,0,Math.PI*2);ctx.fill();
     }
   }
 }
