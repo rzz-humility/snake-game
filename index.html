@@ -755,14 +755,14 @@ function hasEff(e,r){return e&&e[r]>Date.now()}
 function isInvincible(e){return hasEff(e,'shield')||hasEff(e,'ghost')}
 
 // ---- Process eating ----
-function processEat(isBig,pwrCnt,cmb,scr,ec,seId,effRef){
+function processEat(isBig,pwrCnt,cmb,scr,ecRef,seId,effRef){
   var now=Date.now();
   var base=isBig?Math.floor(BIG_FOOD_MIN+(BIG_FOOD_MAX-BIG_FOOD_MIN)*(Math.max(0,BIG_FOOD_LIFE-(now-bigFood.born))/BIG_FOOD_LIFE)):10;
   var inWin=(now-cmb.lastEatTime)<COMBO_WINDOW;if(inWin)cmb.count++;else cmb.count=1;cmb.lastEatTime=now;
   var spdMul=calcSpeedMultiplier(scr),comboMul=getComboMultiplier(cmb);
   var pts=Math.floor(base*spdMul*comboMul);
   scr+=pts;updateScoreEl(seId,scr);
-  if(!isBig){ec++;updateProgressEl(ec);if(ec>=5){ec=0;updateProgressEl(0);spawnBigFood()}spawnFood();pwrCnt.val++;if(pwrCnt.val>=POWERUP_SPAWN_EVERY){pwrCnt.val=0;spawnPowerup()}}
+  if(!isBig){ecRef.val++;updateProgressEl(ecRef.val);if(ecRef.val>=5){ecRef.val=0;updateProgressEl(0);spawnBigFood()}spawnFood();pwrCnt.val++;if(pwrCnt.val>=POWERUP_SPAWN_EVERY){pwrCnt.val=0;spawnPowerup()}}
   else{bigFood=null}
   if(cmb.count===2)showToast('🔥 Combo x2!');
   if(cmb.count===5)showToast('💥 Combo x5!');
@@ -797,9 +797,9 @@ function upSingle(){
   var epw=powerup&&nh.x===powerup.x&&nh.y===powerup.y;
   snake.push(nh);if(!efood&&!ebig&&!epw)snake.shift();
   if(!hasEff(effects,'shield')&&checkSelf(snake)){endSingle();return}
-  var pwrRef={val:pwrCount};
-  if(efood){score=processEat(false,pwrRef,combo,score,eatCount,'score',effects);pwrCount=pwrRef.val;var er={val:earnedCrowns},ms={val:crownMilestone};chkCrown(score,ms,er);earnedCrowns=er.val;crownMilestone=ms.val}
-  if(ebig){score=processEat(true,pwrRef,combo,score,eatCount,'score',effects);pwrCount=pwrRef.val;var er2={val:earnedCrowns},ms2={val:crownMilestone};chkCrown(score,ms2,er2);earnedCrowns=er2.val;crownMilestone=ms2.val}
+  var pwrRef={val:pwrCount},ecRef={val:eatCount};
+  if(efood){score=processEat(false,pwrRef,combo,score,ecRef,'score',effects);pwrCount=pwrRef.val;eatCount=ecRef.val;var er={val:earnedCrowns},ms={val:crownMilestone};chkCrown(score,ms,er);earnedCrowns=er.val;crownMilestone=ms.val}
+  if(ebig){score=processEat(true,pwrRef,combo,score,ecRef,'score',effects);pwrCount=pwrRef.val;eatCount=ecRef.val;var er2={val:earnedCrowns},ms2={val:crownMilestone};chkCrown(score,ms2,er2);earnedCrowns=er2.val;crownMilestone=ms2.val}
   if(epw){applyPw(effects,powerup.type,snake);powerup=null}
   if(bigFood&&Date.now()-bigFood.born>=BIG_FOOD_LIFE)bigFood=null;
   if(powerup&&Date.now()-powerup.born>=POWERUP_LIFE)powerup=null;
@@ -820,9 +820,9 @@ function upDual(){
     var ep=powerup&&nh.x===powerup.x&&nh.y===powerup.y;
     p.snake.push(nh);if(!ef&&!eb&&!ep)p.snake.shift();
     if(!hasEff(p.effects,'shield')&&(checkSelf(p.snake)||checkHit(p.snake,p.other))){p.alive=false;p.snake=[];return}
-    var pwrRef={val:p.pwrCount};
-    if(ef){p.score=processEat(false,pwrRef,p.combo,p.score,p.eatCount,p.seId,p.effects);p.pwrCount=pwrRef.val;var er={val:p.earned},ms={val:p.cm};chkCrown(p.score,ms,er);p.earned=er.val;p.cm=ms.val}
-    if(eb){p.score=processEat(true,pwrRef,p.combo,p.score,p.eatCount,p.seId,p.effects);p.pwrCount=pwrRef.val;var er2={val:p.earned},ms2={val:p.cm};chkCrown(p.score,ms2,er2);p.earned=er2.val;p.cm=ms2.val}
+    var pwrRef={val:p.pwrCount},ecRef={val:p.eatCount};
+    if(ef){p.score=processEat(false,pwrRef,p.combo,p.score,ecRef,p.seId,p.effects);p.pwrCount=pwrRef.val;p.eatCount=ecRef.val;var er={val:p.earned},ms={val:p.cm};chkCrown(p.score,ms,er);p.earned=er.val;p.cm=ms.val}
+    if(eb){p.score=processEat(true,pwrRef,p.combo,p.score,ecRef,p.seId,p.effects);p.pwrCount=pwrRef.val;p.eatCount=ecRef.val;var er2={val:p.earned},ms2={val:p.cm};chkCrown(p.score,ms2,er2);p.earned=er2.val;p.cm=ms2.val}
     if(ep){applyPw(p.effects,powerup.type,p.snake);powerup=null}
     if(p.score>best){best=p.score;updateScoreEl('best',best);localStorage.setItem('snakeBest',best)}
     bothDead=false;
