@@ -121,7 +121,7 @@ button.restart-btn:hover{background:#1a4a8a}
 <div class="header" id="header"></div>
 <div class="control-bar">
 <div class="mode-toggle"><button id="btnSingle" class="active">单人</button><button id="btnDual">双人</button></div>
-<button class="opt-btn" id="btnObstacle">障碍物：关</button>
+<button class="opt-btn active" id="btnObstacle">障碍物：开</button>
 <select id="mapSelect" style="padding:8px 12px;font-size:13px;border:2px solid #0f3460;border-radius:8px;background:#16213e;color:#ffd700;cursor:pointer">
   <option value="标准">🗺 标准</option>
   <option value="空旷">🏞 空旷</option>
@@ -334,7 +334,7 @@ var toastTimer=null;
 function showToast(msg){toast.textContent=msg;toast.classList.remove('show');void toast.offsetWidth;toast.classList.add('show');if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(function(){toast.classList.remove('show')},2000)}
 
 // ---- Settings ----
-var mode='single',obstacleMode=false,currentMap='标准';
+var mode='single',obstacleMode=true,currentMap='标准';
 var MAPS={
   '标准':{name:'标准',desc:'随机障碍物',gen:'random'},
   '空旷':{name:'空旷',desc:'无障碍物',gen:'empty'},
@@ -418,15 +418,15 @@ function initGame(){
   var cx=Math.floor(GRID/2);
   if(obstacleMode)generateObstacles();
   if(mode==='single'){
-    snake=[{x:cx,y:cx},{x:cx-1,y:cx},{x:cx-2,y:cx}];
+    snake=[{x:cx,y:cx},{x:cx-1,y:cx},{x:cx-2,y:cx},{x:cx-3,y:cx},{x:cx-4,y:cx}];
     direction=DIR.RIGHT;nextDirection=DIR.RIGHT;
     score=0;gameOver=false;
     eatCount=0;pwrCount=0;earnedCrowns=0;crownMilestone=CROWN_EVERY;
     combo={count:0,lastEatTime:0};effects=makeEffects();
     updateScoreEl('score',0);updateProgressEl(0);
   }else{
-    snake1=[{x:3,y:3},{x:2,y:3},{x:1,y:3}];direction1=DIR.RIGHT;nextD1=DIR.RIGHT;score1=0;alive1=true;eatCount1=0;pwrCount1=0;earnedCrowns1=0;cm1=CROWN_EVERY;combo1={count:0,lastEatTime:0};effects1=makeEffects();
-    snake2=[{x:25,y:25},{x:26,y:25},{x:27,y:25}];direction2=DIR.LEFT;nextD2=DIR.LEFT;score2=0;alive2=true;eatCount2=0;pwrCount2=0;earnedCrowns2=0;cm2=CROWN_EVERY;combo2={count:0,lastEatTime:0};effects2=makeEffects();
+    snake1=[{x:5,y:3},{x:4,y:3},{x:3,y:3},{x:2,y:3},{x:1,y:3}];direction1=DIR.RIGHT;nextD1=DIR.RIGHT;score1=0;alive1=true;eatCount1=0;pwrCount1=0;earnedCrowns1=0;cm1=CROWN_EVERY;combo1={count:0,lastEatTime:0};effects1=makeEffects();
+    snake2=[{x:23,y:25},{x:24,y:25},{x:25,y:25},{x:26,y:25},{x:27,y:25}];direction2=DIR.LEFT;nextD2=DIR.LEFT;score2=0;alive2=true;eatCount2=0;pwrCount2=0;earnedCrowns2=0;cm2=CROWN_EVERY;combo2={count:0,lastEatTime:0};effects2=makeEffects();
     updateScoreEl('score1',0);updateScoreEl('score2',0);updateProgressEl(0);
   }
   spawnFood();
@@ -482,7 +482,7 @@ function spawnPowerup(){if(powerup)return;var pos=randomFreePos();if(!pos)return
 // ---- Effect tags ----
 function renderEffects(){
   var tags=[];
-  function ae(effs,p){var n=Date.now();if(effs.speed>n)tags.push({c:'#ffff00',t:p+'加速 '+Math.ceil((effs.speed-n)/1000)+'s'});if(effs.ghost>n)tags.push({c:'#00ffff',t:p+'穿障 '+Math.ceil((effs.ghost-n)/1000)+'s'});if(effs.shield>n)tags.push({c:'#ffffff',t:p+'护盾 '+Math.ceil((effs.shield-n)/1000)+'s'})}
+  function ae(effs,p){var n=Date.now();if(typeof effs.speed==='number'&&effs.speed>n)tags.push({c:'#ffff00',t:p+'加速 '+Math.ceil((effs.speed-n)/1000)+'s'});if(typeof effs.ghost==='number'&&effs.ghost>n)tags.push({c:'#00ffff',t:p+'穿障 '+Math.ceil((effs.ghost-n)/1000)+'s'});if(typeof effs.shield==='number'&&effs.shield>n)tags.push({c:'#ffffff',t:p+'护盾 '+Math.ceil((effs.shield-n)/1000)+'s'})}
   if(mode==='single')ae(effects,'');else{if(alive1)ae(effects1,'P1 ');if(alive2)ae(effects2,'P2 ')}
   effectsBar.innerHTML=tags.map(function(t){return'<span class="effect-tag" style="background:'+t.c+'33;border:1px solid '+t.c+'">'+t.t+'</span>'}).join('');
 }
