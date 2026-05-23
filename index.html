@@ -767,6 +767,7 @@ function processEat(isBig,pwrCnt,cmb,scr,ec,seId,effRef){
   if(cmb.count===2)showToast('🔥 Combo x2!');
   if(cmb.count===5)showToast('💥 Combo x5!');
   if(cmb.count===10)showToast('🌟 MEGA Combo!');
+  return scr;
 }
 
 // ---- Apply powerup ----
@@ -797,8 +798,8 @@ function upSingle(){
   snake.push(nh);if(!efood&&!ebig&&!epw)snake.shift();
   if(!hasEff(effects,'shield')&&checkSelf(snake)){endSingle();return}
   var pwrRef={val:pwrCount};
-  if(efood){var os=score;processEat(false,pwrRef,combo,score,eatCount,'score',effects);pwrCount=pwrRef.val;var er={val:earnedCrowns},ms={val:crownMilestone};chkCrown(score,ms,er);earnedCrowns=er.val;crownMilestone=ms.val}
-  if(ebig){processEat(true,pwrRef,combo,score,eatCount,'score',effects);pwrCount=pwrRef.val;var er2={val:earnedCrowns},ms2={val:crownMilestone};chkCrown(score,ms2,er2);earnedCrowns=er2.val;crownMilestone=ms2.val}
+  if(efood){score=processEat(false,pwrRef,combo,score,eatCount,'score',effects);pwrCount=pwrRef.val;var er={val:earnedCrowns},ms={val:crownMilestone};chkCrown(score,ms,er);earnedCrowns=er.val;crownMilestone=ms.val}
+  if(ebig){score=processEat(true,pwrRef,combo,score,eatCount,'score',effects);pwrCount=pwrRef.val;var er2={val:earnedCrowns},ms2={val:crownMilestone};chkCrown(score,ms2,er2);earnedCrowns=er2.val;crownMilestone=ms2.val}
   if(epw){applyPw(effects,powerup.type,snake);powerup=null}
   if(bigFood&&Date.now()-bigFood.born>=BIG_FOOD_LIFE)bigFood=null;
   if(powerup&&Date.now()-powerup.born>=POWERUP_LIFE)powerup=null;
@@ -820,8 +821,8 @@ function upDual(){
     p.snake.push(nh);if(!ef&&!eb&&!ep)p.snake.shift();
     if(!hasEff(p.effects,'shield')&&(checkSelf(p.snake)||checkHit(p.snake,p.other))){p.alive=false;p.snake=[];return}
     var pwrRef={val:p.pwrCount};
-    if(ef){processEat(false,pwrRef,p.combo,p.score,p.eatCount,p.seId,p.effects);p.pwrCount=pwrRef.val;var er={val:p.earned},ms={val:p.cm};chkCrown(p.score,ms,er);p.earned=er.val;p.cm=ms.val}
-    if(eb){processEat(true,pwrRef,p.combo,p.score,p.eatCount,p.seId,p.effects);p.pwrCount=pwrRef.val;var er2={val:p.earned},ms2={val:p.cm};chkCrown(p.score,ms2,er2);p.earned=er2.val;p.cm=ms2.val}
+    if(ef){p.score=processEat(false,pwrRef,p.combo,p.score,p.eatCount,p.seId,p.effects);p.pwrCount=pwrRef.val;var er={val:p.earned},ms={val:p.cm};chkCrown(p.score,ms,er);p.earned=er.val;p.cm=ms.val}
+    if(eb){p.score=processEat(true,pwrRef,p.combo,p.score,p.eatCount,p.seId,p.effects);p.pwrCount=pwrRef.val;var er2={val:p.earned},ms2={val:p.cm};chkCrown(p.score,ms2,er2);p.earned=er2.val;p.cm=ms2.val}
     if(ep){applyPw(p.effects,powerup.type,p.snake);powerup=null}
     if(p.score>best){best=p.score;updateScoreEl('best',best);localStorage.setItem('snakeBest',best)}
     bothDead=false;
