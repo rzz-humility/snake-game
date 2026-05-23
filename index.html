@@ -418,15 +418,15 @@ function initGame(){
   var cx=Math.floor(GRID/2);
   if(obstacleMode)generateObstacles();
   if(mode==='single'){
-    snake=[{x:cx,y:cx},{x:cx-1,y:cx},{x:cx-2,y:cx},{x:cx-3,y:cx},{x:cx-4,y:cx}];
+    snake=[{x:cx-4,y:cx},{x:cx-3,y:cx},{x:cx-2,y:cx},{x:cx-1,y:cx},{x:cx,y:cx}];
     direction=DIR.RIGHT;nextDirection=DIR.RIGHT;
     score=0;gameOver=false;
     eatCount=0;pwrCount=0;earnedCrowns=0;crownMilestone=CROWN_EVERY;
     combo={count:0,lastEatTime:0};effects=makeEffects();
     updateScoreEl('score',0);updateProgressEl(0);
   }else{
-    snake1=[{x:5,y:3},{x:4,y:3},{x:3,y:3},{x:2,y:3},{x:1,y:3}];direction1=DIR.RIGHT;nextD1=DIR.RIGHT;score1=0;alive1=true;eatCount1=0;pwrCount1=0;earnedCrowns1=0;cm1=CROWN_EVERY;combo1={count:0,lastEatTime:0};effects1=makeEffects();
-    snake2=[{x:23,y:25},{x:24,y:25},{x:25,y:25},{x:26,y:25},{x:27,y:25}];direction2=DIR.LEFT;nextD2=DIR.LEFT;score2=0;alive2=true;eatCount2=0;pwrCount2=0;earnedCrowns2=0;cm2=CROWN_EVERY;combo2={count:0,lastEatTime:0};effects2=makeEffects();
+    snake1=[{x:1,y:3},{x:2,y:3},{x:3,y:3},{x:4,y:3},{x:5,y:3}];direction1=DIR.RIGHT;nextD1=DIR.RIGHT;score1=0;alive1=true;eatCount1=0;pwrCount1=0;earnedCrowns1=0;cm1=CROWN_EVERY;combo1={count:0,lastEatTime:0};effects1=makeEffects();
+    snake2=[{x:27,y:25},{x:26,y:25},{x:25,y:25},{x:24,y:25},{x:23,y:25}];direction2=DIR.LEFT;nextD2=DIR.LEFT;score2=0;alive2=true;eatCount2=0;pwrCount2=0;earnedCrowns2=0;cm2=CROWN_EVERY;combo2={count:0,lastEatTime:0};effects2=makeEffects();
     updateScoreEl('score1',0);updateScoreEl('score2',0);updateProgressEl(0);
   }
   spawnFood();
