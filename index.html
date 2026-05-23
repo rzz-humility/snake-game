@@ -21,7 +21,7 @@ body{background:#1a1a2e;display:flex;justify-content:center;align-items:center;m
 .diamond-box{cursor:pointer;position:relative;transition:all 0.2s}
 .diamond-box:hover{background:#1a2a4e;transform:scale(1.05)}
 .diamond-box .plus{color:#5cf;font-size:12px}
-canvas{border:2px solid #0f3460;border-radius:4px;background:#16213e;display:block}
+canvas{border:2px solid #0f3460;border-radius:4px;background:#16213e;display:block;max-width:100%;height:auto;touch-action:none}
 .control-bar{display:flex;justify-content:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
 .mode-toggle{display:inline-flex;border-radius:8px;overflow:hidden;border:2px solid #0f3460}
 .mode-toggle button,.opt-btn{margin:0;padding:8px 16px;font-size:13px;border:none;cursor:pointer;background:#16213e;color:#888;border-radius:0;transition:all 0.2s}
@@ -83,7 +83,35 @@ button.restart-btn:hover{background:#1a4a8a}
 .modal .recharge-btn .sub{font-size:11px;color:#888}
 .recharge-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
 
-@media(max-width:750px){.wrapper{flex-direction:column;align-items:center}}
+.dpad{display:none;justify-content:center;align-items:center;margin-top:12px;gap:4px}
+.dpad-col{display:flex;flex-direction:column;align-items:center;gap:4px}
+.dpad-row{display:flex;gap:4px}
+.dpad-btn{width:52px;height:52px;border-radius:12px;border:2px solid #0f3460;background:#16213e;color:#ccc;font-size:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:background 0.1s;user-select:none;-webkit-user-select:none}
+.dpad-btn:active{background:#0f3460;color:#ffd700}
+.dpad-center{width:52px;height:52px;border-radius:12px;background:transparent}
+.dpad-dual{display:none;gap:24px;justify-content:center;margin-top:12px}
+.dpad-dual .dpad-label{color:#888;font-size:11px;text-align:center;margin-bottom:4px}
+.dpad-p1 .dpad-btn{border-color:#2a5a2a}
+.dpad-p1 .dpad-btn:active{background:#1a3a1a;color:#50dc32}
+.dpad-p2 .dpad-btn{border-color:#1a3a5a}
+.dpad-p2 .dpad-btn:active{background:#1a2a4a;color:#30b4ff}
+
+@media(max-width:750px){
+  .wrapper{flex-direction:column;align-items:center}
+  body{padding:8px}
+  .leaderboard{width:100%;min-width:auto;max-height:200px;padding:10px}
+  .leaderboard h3{font-size:15px;margin-bottom:8px;padding-bottom:6px}
+  .leaderboard li{font-size:12px;padding:4px 6px}
+  .control-bar{gap:6px}
+  .mode-toggle button,.opt-btn{padding:6px 10px;font-size:11px}
+  #mapSelect{padding:6px 8px;font-size:11px}
+  .score-box{padding:5px 8px;font-size:11px}
+  .score-box span{font-size:14px}
+  .skin-dot{width:28px;height:28px;font-size:10px}
+  .skin-bar{gap:6px}
+  .restart-btn{padding:8px 20px;font-size:14px}
+  .hint{font-size:10px;margin-top:4px}
+}
 </style>
 </head>
 <body>
@@ -104,6 +132,43 @@ button.restart-btn:hover{background:#1a4a8a}
 </div>
 <div class="effects-bar" id="effectsBar"></div>
 <canvas id="canvas"></canvas>
+<div class="dpad" id="dpadSingle">
+  <div class="dpad-col">
+    <div class="dpad-btn" data-dir="up">↑</div>
+    <div class="dpad-row">
+      <div class="dpad-btn" data-dir="left">←</div>
+      <div class="dpad-center"></div>
+      <div class="dpad-btn" data-dir="right">→</div>
+    </div>
+    <div class="dpad-btn" data-dir="down">↓</div>
+  </div>
+</div>
+<div class="dpad-dual" id="dpadDual">
+  <div class="dpad-p1">
+    <div class="dpad-label">🟢 P1</div>
+    <div class="dpad-col">
+      <div class="dpad-btn" data-dir="up" data-player="1">W</div>
+      <div class="dpad-row">
+        <div class="dpad-btn" data-dir="left" data-player="1">A</div>
+        <div class="dpad-center"></div>
+        <div class="dpad-btn" data-dir="right" data-player="1">D</div>
+      </div>
+      <div class="dpad-btn" data-dir="down" data-player="1">S</div>
+    </div>
+  </div>
+  <div class="dpad-p2">
+    <div class="dpad-label">🔵 P2</div>
+    <div class="dpad-col">
+      <div class="dpad-btn" data-dir="up" data-player="2">↑</div>
+      <div class="dpad-row">
+        <div class="dpad-btn" data-dir="left" data-player="2">←</div>
+        <div class="dpad-center"></div>
+        <div class="dpad-btn" data-dir="right" data-player="2">→</div>
+      </div>
+      <div class="dpad-btn" data-dir="down" data-player="2">↓</div>
+    </div>
+  </div>
+</div>
 <div class="skin-section"><div class="skin-section-label">— 基础皮肤 (👑×3解锁) —</div><div class="skin-bar" id="skinBar"></div></div>
 <div class="skin-section"><div class="skin-section-label">— 突破锚点 (💎购买) —</div><div class="skin-bar" id="premiumBar"></div></div>
 <p class="hint" id="hintText"></p>
@@ -281,7 +346,7 @@ btnSingle.addEventListener('click',function(){switchMode('single')});
 btnDual.addEventListener('click',function(){switchMode('dual')});
 btnObstacle.addEventListener('click',function(){obstacleMode=!obstacleMode;btnObstacle.textContent='障碍物：'+(obstacleMode?'开':'关');btnObstacle.className='opt-btn'+(obstacleMode?' active':'');clearTimeout(gameLoop);initGame();draw();loop()});
 document.getElementById('mapSelect').addEventListener('change',function(){currentMap=this.value;obstacleMode=true;btnObstacle.textContent='障碍物：开';btnObstacle.className='opt-btn active';clearTimeout(gameLoop);initGame();draw();loop()});
-function switchMode(m){if(mode===m)return;mode=m;btnSingle.className=m==='single'?'active':'';btnDual.className=m==='dual'?'active':'';clearTimeout(gameLoop);initGame();draw();loop()}
+function switchMode(m){if(mode===m)return;mode=m;btnSingle.className=m==='single'?'active':'';btnDual.className=m==='dual'?'active':'';updateDpadVisibility();updateHint();clearTimeout(gameLoop);initGame();draw();loop()}
 
 function updateAllDisplays(){
   updateCrownDisplay();updateDiamondDisplay();
@@ -809,10 +874,102 @@ document.addEventListener('keydown',function(e){
 });
 document.getElementById('restart').addEventListener('click',function(){clearTimeout(gameLoop);trail=[];particles=[];initGame();draw();loop()});
 
+// ---- Touch / Mobile support ----
+var isTouchDevice='ontouchstart' in window||navigator.maxTouchPoints>0;
+var dpadSingle=document.getElementById('dpadSingle');
+var dpadDual=document.getElementById('dpadDual');
+
+function updateDpadVisibility(){
+  if(!isTouchDevice)return;
+  if(mode==='single'){
+    dpadSingle.style.display='flex';
+    dpadDual.style.display='none';
+  }else{
+    dpadSingle.style.display='none';
+    dpadDual.style.display='flex';
+  }
+}
+
+// D-pad button handlers
+function handleDpad(dir,p){
+  if(mode==='single'){
+    if(gameOver)return;
+    if(dir.x+direction.x===0&&dir.y+direction.y===0)return;
+    nextDirection=dir;
+  }else{
+    if(p===1){if(alive1&&!(dir.x+direction1.x===0&&dir.y+direction1.y===0))nextD1=dir}
+    else{if(alive2&&!(dir.x+direction2.x===0&&dir.y+direction2.y===0))nextD2=dir}
+  }
+}
+
+var DIR_MAP={up:DIR.UP,down:DIR.DOWN,left:DIR.LEFT,right:DIR.RIGHT};
+
+function addDpadListeners(container){
+  var btns=container.querySelectorAll('.dpad-btn');
+  for(var i=0;i<btns.length;i++){
+    btns[i].addEventListener('touchstart',function(e){
+      e.preventDefault();
+      var dir=DIR_MAP[this.getAttribute('data-dir')];
+      var p=parseInt(this.getAttribute('data-player'))||1;
+      if(dir)handleDpad(dir,p);
+    });
+    btns[i].addEventListener('mousedown',function(e){
+      e.preventDefault();
+      var dir=DIR_MAP[this.getAttribute('data-dir')];
+      var p=parseInt(this.getAttribute('data-player'))||1;
+      if(dir)handleDpad(dir,p);
+    });
+  }
+}
+addDpadListeners(dpadSingle);
+addDpadListeners(dpadDual);
+
+// Swipe gesture on canvas
+var swipeStart=null;
+canvas.addEventListener('touchstart',function(e){
+  e.preventDefault();
+  var t=e.touches[0];
+  swipeStart={x:t.clientX,y:t.clientY,time:Date.now()};
+},{passive:false});
+
+canvas.addEventListener('touchend',function(e){
+  if(!swipeStart)return;
+  var t=e.changedTouches[0];
+  var dx=t.clientX-swipeStart.x,dy=t.clientY-swipeStart.y;
+  var dist=Math.sqrt(dx*dx+dy*dy);
+  if(dist<25){swipeStart=null;return}
+  var absDx=Math.abs(dx),absDy=Math.abs(dy);
+  var dir;
+  if(absDx>absDy)dir=dx>0?DIR.RIGHT:DIR.LEFT;
+  else dir=dy>0?DIR.DOWN:DIR.UP;
+
+  if(mode==='single'){
+    if(gameOver)return;
+    if(!(dir.x+direction.x===0&&dir.y+direction.y===0))nextDirection=dir;
+  }else{
+    // Dual mode: left half of canvas = P1, right half = P2
+    var rect=canvas.getBoundingClientRect();
+    var midX=rect.left+rect.width/2;
+    if(swipeStart.x<midX){
+      if(alive1&&!(dir.x+direction1.x===0&&dir.y+direction1.y===0))nextD1=dir;
+    }else{
+      if(alive2&&!(dir.x+direction2.x===0&&dir.y+direction2.y===0))nextD2=dir;
+    }
+  }
+  swipeStart=null;
+});
+
+canvas.addEventListener('touchmove',function(e){e.preventDefault()},{passive:false});
+
+// Update hint text for mobile
+function updateHint(){
+  var kb=mode==='single'?'方向键 / WASD 控制':'🟢P1: WASD | 🔵P2: ↑↓←→';
+  var touch=isTouchDevice?' | 触屏滑动或方向键控制':'';
+  hintEl.innerHTML=kb+touch+' | 空格键重新开始';
+}
+
 // ---- Init ----
-renderLB();buildSkinBars();updateCrownDisplay();updateDiamondDisplay();initGame();
-if(mode==='single')hintEl.innerHTML='方向键 / WASD 控制 | 空格键重新开始';
-else hintEl.innerHTML='🟢P1: WASD | 🔵P2: ↑↓←→ | 空格键重新开始';
+renderLB();buildSkinBars();updateCrownDisplay();updateDiamondDisplay();initGame();updateDpadVisibility();updateHint();
 draw();loop();
 </script>
 </body>
