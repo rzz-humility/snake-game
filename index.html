@@ -612,6 +612,8 @@ function spawnAISnakes(){
 
 function updateAISnake(ai){
   if(!ai.alive){if(Date.now()>=ai.respawnAt){var s=makeAISnake();if(s){ai.body=s.body;ai.dir=s.dir;ai.alive=true}}return}
+  // AI moves at half speed (every 2 frames)
+  if(frameCount%2!==0)return;
   // Freeze check: AI moves at 1/3 speed
   var frozen=hasEff(effects,'freeze');if(mode==='dual')frozen=frozen||hasEff(effects1,'freeze')||hasEff(effects2,'freeze');
   if(frozen&&frameCount%3!==0)return;
