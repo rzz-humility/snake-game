@@ -38,6 +38,17 @@ canvas{border:2px solid #0f3460;border-radius:4px;background:#16213e;display:blo
 .skin-dot.locked{opacity:0.5;cursor:pointer}
 .skin-dot.premium{border-style:dashed;border-color:rgba(100,200,255,0.5)}
 .skin-dot.premium.active{border-color:#5cf;box-shadow:0 0 14px rgba(100,200,255,0.6)}
+.upgrade-section{margin-top:6px}
+.upgrade-bar{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.upgrade-item{width:80px;background:#16213e;border:2px solid #0f3460;border-radius:10px;padding:8px;text-align:center;cursor:pointer;transition:all 0.2s;color:#888}
+.upgrade-item:hover:not(.owned){border-color:#ffd700;transform:translateY(-2px)}
+.upgrade-item.owned{border-color:#44aa44;color:#eee;cursor:default;background:#1a2a1e}
+.upgrade-item .up-icon{font-size:22px;display:block;margin-bottom:2px}
+.upgrade-item .up-name{font-size:10px;font-weight:bold}
+.upgrade-item .up-price{font-size:9px;color:#ffd700;margin-top:2px}
+.upgrade-item.owned .up-price{color:#44aa44}
+@media(max-width:750px){.upgrade-item{width:65px;padding:6px}.up-icon{font-size:18px}}
+
 .skin-dot .price-tag{position:absolute;bottom:-8px;font-size:9px;color:#5cf;background:#0a0a1e;padding:1px 5px;border-radius:6px;white-space:nowrap}
 
 .hint{color:#666;margin-top:8px;font-size:12px;line-height:1.6}
@@ -96,6 +107,30 @@ button.restart-btn:hover{background:#1a4a8a}
 .dpad-p2 .dpad-btn{border-color:#1a3a5a}
 .dpad-p2 .dpad-btn:active{background:#1a2a4a;color:#30b4ff}
 
+.card-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.75);z-index:150;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.card-title{color:#ffd700;font-size:22px;font-weight:bold;text-align:center}
+.card-container{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.card-item{width:150px;background:#16213e;border:2px solid #0f3460;border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:all 0.2s;color:#eee}
+.card-item:hover{transform:translateY(-4px);border-color:#ffd700;box-shadow:0 8px 24px rgba(255,215,0,0.3)}
+.card-item .card-icon{font-size:36px;margin-bottom:8px}
+.card-item .card-name{font-size:15px;font-weight:bold;margin-bottom:4px}
+.card-item .card-desc{font-size:12px;color:#aaa}
+.card-item.cat-instant{border-color:#44aa44}
+.card-item.cat-passive{border-color:#4488cc}
+.card-item.cat-risky{border-color:#aa44aa}
+@media(max-width:500px){.card-item{width:120px;padding:12px}.card-icon{font-size:28px}}
+
+.achievement-panel{background:#16213e;border:2px solid #0f3460;border-radius:8px;padding:12px;min-width:200px}
+.achievement-panel h3{color:#ffd700;text-align:center;margin-bottom:8px;font-size:14px}
+.ach-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.ach-item{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:6px;font-size:11px;color:#666}
+.ach-item.unlocked{color:#eee;background:rgba(255,215,0,0.05)}
+.ach-item .ach-icon{font-size:16px;min-width:20px;text-align:center}
+.ach-item .ach-info{flex:1}
+.ach-item .ach-name{font-size:11px;font-weight:bold}
+.ach-item .ach-desc{font-size:9px;color:#555}
+.ach-item.unlocked .ach-desc{color:#aaa}
+
 @media(max-width:750px){
   .wrapper{flex-direction:column;align-items:center}
   body{padding:8px}
@@ -116,6 +151,10 @@ button.restart-btn:hover{background:#1a4a8a}
 </head>
 <body>
 <div class="crown-toast" id="toast"></div>
+<div class="card-overlay" id="cardOverlay" style="display:none">
+  <div class="card-title">🎴 选择升级</div>
+  <div class="card-container" id="cardContainer"></div>
+</div>
 <div class="wrapper">
 <div class="game-container">
 <div class="header" id="header"></div>
@@ -171,10 +210,12 @@ button.restart-btn:hover{background:#1a4a8a}
 </div>
 <div class="skin-section"><div class="skin-section-label">— 基础皮肤 (👑×3解锁) —</div><div class="skin-bar" id="skinBar"></div></div>
 <div class="skin-section"><div class="skin-section-label">— 突破锚点 (💎购买) —</div><div class="skin-bar" id="premiumBar"></div></div>
+<div class="upgrade-section"><div class="skin-section-label">— 永久强化 (👑购买) —</div><div class="upgrade-bar" id="upgradeBar"></div></div>
 <p class="hint" id="hintText"></p>
 <button class="restart-btn" id="restart">重新开始</button>
 </div>
 <div class="leaderboard" id="leaderboard"><h3>排行榜</h3></div>
+<div class="achievement-panel" id="achievementPanel"><h3>🏆 成就</h3></div>
 </div>
 
 <script>
@@ -218,7 +259,77 @@ var POWERUP_TYPES=[
   {id:'shrink',icon:'✂️',color:'#ff44ff',name:'缩小',dur:0},
   {id:'ghost',icon:'👻',color:'#00ffff',name:'穿障',dur:5000},
   {id:'shield',icon:'🛡️',color:'#ffffff',name:'护盾',dur:5000},
+  {id:'magnet',icon:'🧲',color:'#ff8800',name:'磁铁',dur:6000},
+  {id:'freeze',icon:'❄️',color:'#88ccff',name:'冰冻',dur:5000},
+  {id:'bomb',icon:'💣',color:'#ff4444',name:'炸弹',dur:0},
 ];
+
+// ---- Card Upgrade System ----
+var CARD_TRIGGER_EVERY=8,cardTriggerCount=0,cardMaxPerGame=5,totalEats=0;
+var cardActive=false,scoreMul=1,speedMul=1,EFFECT_DURATION_BONUS=0,MAGNET_RANGE=0;
+var CARD_POOL=[
+  {id:'grow',icon:'🐍',name:'蛇身增长',desc:'身体 +3 节',cat:'instant'},
+  {id:'gift_shield',icon:'🛡️',name:'护盾赠礼',desc:'获得一个护盾',cat:'instant'},
+  {id:'score_burst',icon:'💥',name:'分数爆发',desc:'当前分数 ×1.5',cat:'instant'},
+  {id:'clear_ai',icon:'🧹',name:'清场',desc:'清除所有 AI 蛇',cat:'instant'},
+  {id:'slow',icon:'🐢',name:'慢生活',desc:'速度降低 15%',cat:'passive'},
+  {id:'greed',icon:'💰',name:'贪婪',desc:'食物分值 +20%',cat:'passive'},
+  {id:'long_effect',icon:'⏱️',name:'长生诀',desc:'道具持续 +3s',cat:'passive'},
+  {id:'magnet_field',icon:'🧲',name:'磁力场',desc:'食物吸收 +2 格',cat:'passive'},
+  {id:'risky_half',icon:'✂️',name:'断尾求生',desc:'身体减半+2 护盾',cat:'risky'},
+  {id:'risky_bomb',icon:'💣',name:'炸弹狂欢',desc:'5 个障碍物+50 分',cat:'risky'},
+  {id:'blind',icon:'🎲',name:'盲选',desc:'随机两种效果',cat:'risky'},
+  {id:'reset_snake',icon:'🔄',name:'重置',desc:'回到 5 节+200 分',cat:'risky'}
+];
+
+function shuffleArray(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}}
+
+function triggerCards(snakeRef,effRef,ctxRef){
+  cardActive=true;cardTriggerCount++;
+  var pool=CARD_POOL.slice();shuffleArray(pool);
+  var cards=[];
+  var instants=pool.filter(function(c){return c.cat==='instant'});
+  if(instants.length>0)cards.push(instants[0]);
+  var rest=pool.filter(function(c){return c!==cards[0]});
+  shuffleArray(rest);
+  for(var i=0;i<rest.length&&cards.length<3;i++){if(cards.indexOf(rest[i])===-1)cards.push(rest[i])}
+  renderCards(cards,snakeRef,effRef,ctxRef);
+}
+
+function renderCards(cards,snakeRef,effRef,ctxRef){
+  var overlay=document.getElementById('cardOverlay');
+  var container=document.getElementById('cardContainer');
+  container.innerHTML='';
+  for(var i=0;i<cards.length;i++){
+    var c=cards[i];
+    var div=document.createElement('div');
+    div.className='card-item cat-'+c.cat;
+    div.innerHTML='<div class="card-icon">'+c.icon+'</div><div class="card-name">'+c.name+'</div><div class="card-desc">'+c.desc+'</div>';
+    div.onclick=(function(card){return function(){selectCard(card,snakeRef,effRef,ctxRef)}})(c);
+    container.appendChild(div);
+  }
+  overlay.style.display='flex';
+}
+
+function selectCard(card,snakeRef,effRef,ctxRef){
+  var now=Date.now();
+  switch(card.id){
+    case'grow':for(var i=0;i<3;i++){var tail=snakeRef[0];snakeRef.unshift({x:tail.x,y:tail.y})}break;
+    case'gift_shield':effRef.shield=now+5000+(EFFECT_DURATION_BONUS||0);break;
+    case'score_burst':ctxRef.scoreRef.val=Math.floor(ctxRef.scoreRef.val*1.5);updateScoreEl(ctxRef.seId,ctxRef.scoreRef.val);break;
+    case'clear_ai':for(var i=0;i<aiSnakes.length;i++)killAISnake(aiSnakes[i]);break;
+    case'slow':speedMul+=0.15;break;
+    case'greed':scoreMul+=0.2;break;
+    case'long_effect':EFFECT_DURATION_BONUS+=3000;break;
+    case'magnet_field':MAGNET_RANGE+=2;break;
+    case'risky_half':var nl=Math.max(2,Math.floor(snakeRef.length/2));snakeRef.splice(0,snakeRef.length-nl);effRef.shield=now+10000;break;
+    case'risky_bomb':for(var i=0;i<5;i++){var p=randomFreePos();if(p)obstacles.push(p)}ctxRef.scoreRef.val+=50;updateScoreEl(ctxRef.seId,ctxRef.scoreRef.val);break;
+    case'blind':var pool=CARD_POOL.filter(function(c){return c.id!=='blind'});var c1=pool[Math.floor(Math.random()*pool.length)];selectCard(c1,snakeRef,effRef,ctxRef);var c2=pool[Math.floor(Math.random()*pool.length)];selectCard(c2,snakeRef,effRef,ctxRef);break;
+    case'reset_snake':while(snakeRef.length>5)snakeRef.shift();ctxRef.scoreRef.val+=200;updateScoreEl(ctxRef.seId,ctxRef.scoreRef.val);break;
+  }
+  document.getElementById('cardOverlay').style.display='none';
+  cardActive=false;
+}
 
 // ---- Recharge packages ----
 var RECHARGE_PKGS=[
@@ -236,10 +347,86 @@ function addCrowns(n){var d=loadData();d.crowns=(d.crowns||0)+n;saveData(d)}
 function spendCrowns(n){var d=loadData();d.crowns=Math.max(0,(d.crowns||0)-n);saveData(d)}
 function getDiamonds(){return loadData().diamonds||0}
 function addDiamonds(n){var d=loadData();d.diamonds=(d.diamonds||0)+n;saveData(d)}
-function spendDiamonds(n){var d=loadData();d.diamonds=Math.max(0,(d.diamonds||0)-n);saveData(d)}
+function spendDiamonds(n){var d=loadData();d.diamonds=Math.max(0,(d.diamonds||0)-n);d.totalDiamondSpent=(d.totalDiamondSpent||0)+n;saveData(d);if((d.totalDiamondSpent||0)>=500)unlockAchievement('spend500')}
 function getUnlocked(){var u=loadData().unlocked||[];if(u.length===0)u=['经典绿'];return u}
 function unlockSkin(name){var d=loadData();var u=d.unlocked||['经典绿'];if(u.indexOf(name)===-1)u.push(name);d.unlocked=u;saveData(d)}
 function getActiveSkin(){return loadData().activeSkin||'经典绿'}
+
+// ---- Achievements ----
+var ACHIEVEMENTS=[
+  {id:'first10',icon:'🥚',name:'初次尝试',desc:'单局得分 ≥ 10'},
+  {id:'size20',icon:'🐍',name:'初具规模',desc:'单局蛇身 ≥ 20 节'},
+  {id:'speed5',icon:'⚡',name:'极速狂飙',desc:'速度达到 Lv.5'},
+  {id:'combo10',icon:'🔥',name:'连击大师',desc:'达成 Combo ×10'},
+  {id:'crown10',icon:'👑',name:'王冠收集者',desc:'累计获得 10 皇冠'},
+  {id:'kill1',icon:'💀',name:'蛇之终结',desc:'击杀 1 条 AI 蛇'},
+  {id:'kill10',icon:'🤖',name:'AI 猎手',desc:'累计击杀 10 条 AI 蛇'},
+  {id:'card5',icon:'🎯',name:'神之卡牌',desc:'一局触发 5 次选牌'},
+  {id:'shieldKill',icon:'🛡️',name:'坚不可摧',desc:'护盾状态下击杀 AI 蛇'},
+  {id:'spend500',icon:'💎',name:'氪金战士',desc:'累计消费 500 钻石'},
+  {id:'score100',icon:'🏆',name:'百夫长',desc:'单局 ≥ 100 分'},
+  {id:'ghostKill',icon:'👻',name:'幽灵刺客',desc:'穿障状态下击杀 AI 蛇'},
+];
+var gameStats={};
+function getAchievements(){try{return JSON.parse(localStorage.getItem('snakeAch'))||{}}catch(e){return{}}}
+function saveAchievements(d){localStorage.setItem('snakeAch',JSON.stringify(d))}
+function unlockAchievement(id){var ach=getAchievements();if(ach[id])return false;ach[id]=Date.now();saveAchievements(ach);var a=ACHIEVEMENTS.find(function(x){return x.id===id});if(a)showToast('🏆 成就解锁: '+a.icon+' '+a.name+'!');renderAchievements();return true}
+function renderAchievements(){
+  var unlocked=getAchievements();var achEl=document.getElementById('achievementPanel');
+  if(!achEl)return;var h='<h3>🏆 成就</h3><div class="ach-grid">';
+  for(var i=0;i<ACHIEVEMENTS.length;i++){var a=ACHIEVEMENTS[i],isU=!!unlocked[a.id];
+    h+='<div class="ach-item'+(isU?' unlocked':'')+'"><span class="ach-icon">'+(isU?a.icon:'🔒')+'</span><div class="ach-info"><div class="ach-name">'+a.name+'</div><div class="ach-desc">'+(isU?'已解锁':a.desc)+'</div></div></div>';}
+  h+='</div>';achEl.innerHTML=h;
+}
+
+// ---- Permanent Upgrades ----
+var UPGRADES=[
+  {id:'slow_start',icon:'🐣',name:'慢热开局',desc:'初始速度降低 15%',price:3},
+  {id:'big_appetite',icon:'🥘',name:'大胃口',desc:'大球只需 4 个食物',price:5},
+  {id:'long_effect_perm',icon:'⏱️',name:'道具长生',desc:'道具持续 +2s',price:3},
+  {id:'start_magnet',icon:'🧲',name:'自带磁铁',desc:'每局开局 3s 磁铁',price:5},
+  {id:'safe_start',icon:'🛡️',name:'保险起见',desc:'首次撞障碍免疫',price:8},
+];
+var BIG_FOOD_TRIGGER=5,SAFE_START_USED=false;
+function getUpgrades(){try{return JSON.parse(localStorage.getItem('snakeUp'))||{}}catch(e){return{}}}
+function hasUpgrade(id){return !!getUpgrades()[id]}
+function buyUpgrade(id){
+  var u=getUpgrades();if(u[id])return false;
+  var up=UPGRADES.find(function(x){return x.id===id});if(!up)return false;
+  if(getCrowns()<up.price){showToast('👑 皇冠不足！需要 '+up.price+' 个');return false}
+  spendCrowns(up.price);u[id]=Date.now();saveUpgrades(u);
+  updateCrownDisplay();renderUpgrades();showToast('✅ '+up.name+' 已购买！');return true;
+}
+function renderUpgrades(){
+  var owned=getUpgrades();var h='';
+  for(var i=0;i<UPGRADES.length;i++){var u=UPGRADES[i],isOwn=!!owned[u.id];
+    h+='<div class="upgrade-item'+(isOwn?' owned':'')+'" onclick="onUpgradeClick(\''+u.id+'\')"><span class="up-icon">'+u.icon+'</span><span class="up-name">'+u.name+'</span>';
+    if(!isOwn)h+='<span class="up-price">👑'+u.price+'</span>';else h+='<span class="up-price">✅</span>';h+='</div>';}
+  var el=document.getElementById('upgradeBar');if(el)el.innerHTML=h;
+}
+function onUpgradeClick(id){
+  if(hasUpgrade(id))return;
+  var up=UPGRADES.find(function(x){return x.id===id});
+  if(!up)return;
+  if(getCrowns()<up.price){showToast('👑 皇冠不足！需要 '+up.price+' 个');return}
+  buyUpgrade(id);
+}
+
+function checkAchievements(){
+  var gs=gameStats;if(!gs)return;
+  if(gs.maxScore>=10)unlockAchievement('first10');
+  if(gs.maxLen>=20)unlockAchievement('size20');
+  if(gs.maxSpeed>=5)unlockAchievement('speed5');
+  if(gs.maxCombo>=10)unlockAchievement('combo10');
+  if(getCrowns()>=10)unlockAchievement('crown10');
+  if(gs.aiKills>=1)unlockAchievement('kill1');
+  if(gs.aiKills>=10)unlockAchievement('kill10');
+  if(gs.cardCount>=5)unlockAchievement('card5');
+  if(gs.shieldKill)unlockAchievement('shieldKill');
+  if((loadData().totalDiamondSpent||0)>=500)unlockAchievement('spend500');
+  if(gs.maxScore>=100)unlockAchievement('score100');
+  if(gs.ghostKill)unlockAchievement('ghostKill');
+}
 function setActiveSkin(name){var d=loadData();d.activeSkin=name;saveData(d)}
 
 // ---- Leaderboard ----
@@ -407,6 +594,70 @@ var combo,combo1,combo2;
 var effects,effects1,effects2;
 var gameLoop,frameCount=0;
 
+// ---- AI Snakes ----
+var aiSnakes=[],aiKillCount=0,droppedItems=[];
+var MAX_AI_SNAKES=2,AI_SNAKE_LEN=4,AI_RESPAWN_DELAY=5000,AI_DROP_LIFE=10000;
+
+function makeAISnake(){
+  var pos=randomFreePos();if(!pos)return null;
+  var body=[{x:pos.x-3,y:pos.y},{x:pos.x-2,y:pos.y},{x:pos.x-1,y:pos.y},{x:pos.x,y:pos.y}];
+  return{body:body,dir:DIR.RIGHT,alive:true,respawnAt:0};
+}
+
+function spawnAISnakes(){
+  aiSnakes=[];aiKillCount=0;
+  var n=mode==='dual'?1:MAX_AI_SNAKES;
+  for(var i=0;i<n;i++){var s=makeAISnake();if(s)aiSnakes.push(s);}
+}
+
+function updateAISnake(ai){
+  if(!ai.alive){if(Date.now()>=ai.respawnAt){var s=makeAISnake();if(s){ai.body=s.body;ai.dir=s.dir;ai.alive=true}}return}
+  // Freeze check: AI moves at 1/3 speed
+  var frozen=hasEff(effects,'freeze');if(mode==='dual')frozen=frozen||hasEff(effects1,'freeze')||hasEff(effects2,'freeze');
+  if(frozen&&frameCount%3!==0)return;
+  var head=ai.body[ai.body.length-1];
+  var target=null,minDist=Infinity;
+  if(food){var dx=food.x-head.x,dy=food.y-head.y;minDist=Math.abs(dx)+Math.abs(dy);target=food}
+  if(bigFood){var bx=bigFood.x-head.x,by=bigFood.y-head.y;var bd=Math.abs(bx)+Math.abs(by);if(bd<minDist){minDist=bd;target=bigFood}}
+  var newDir=ai.dir;
+  if(Math.random()<0.7&&target){
+    var opts=[];if(target.x>head.x)opts.push(DIR.RIGHT);if(target.x<head.x)opts.push(DIR.LEFT);if(target.y>head.y)opts.push(DIR.DOWN);if(target.y<head.y)opts.push(DIR.UP);
+    if(opts.length>0&&Math.random()<0.8)newDir=opts[Math.floor(Math.random()*opts.length)];
+  }
+  if(Math.random()<0.3){var rdirs=[DIR.UP,DIR.DOWN,DIR.LEFT,DIR.RIGHT];newDir=rdirs[Math.floor(Math.random()*4)]}
+  if(newDir.x+ai.dir.x===0&&newDir.y+ai.dir.y===0)newDir=ai.dir;
+  ai.dir=newDir;
+  var nh={x:head.x+ai.dir.x,y:head.y+ai.dir.y};
+  nh.x=((nh.x%GRID)+GRID)%GRID;nh.y=((nh.y%GRID)+GRID)%GRID
+  if(hitObs(nh)){
+    var altDirs=[DIR.UP,DIR.DOWN,DIR.LEFT,DIR.RIGHT];
+    altDirs=altDirs.filter(function(d){return!(d.x+ai.dir.x===0&&d.y+ai.dir.y===0)});
+    var found=false;
+    for(var i=0;i<altDirs.length;i++){
+      var nh2={x:head.x+altDirs[i].x,y:head.y+altDirs[i].y};
+      nh2.x=((nh2.x%GRID)+GRID)%GRID;nh2.y=((nh2.y%GRID)+GRID)%GRID;
+      if(!hitObs(nh2)){nh=nh2;ai.dir=altDirs[i];found=true;break}
+    }
+    if(!found){killAISnake(ai);return}
+  }
+  ai.body.push(nh);
+  var ate=false;
+  if(food&&nh.x===food.x&&nh.y===food.y){food=null;spawnFood();ate=true}
+  if(bigFood&&nh.x===bigFood.x&&nh.y===bigFood.y){bigFood=null;ate=true}
+  if(!ate)ai.body.shift();
+  if(checkSelf(ai.body)){killAISnake(ai)}
+}
+
+function killAISnake(ai){
+  ai.alive=false;ai.respawnAt=Date.now()+AI_RESPAWN_DELAY;
+  var head=ai.body[ai.body.length-1];
+  droppedItems.push({x:head.x,y:head.y,type:POWERUP_TYPES[Math.floor(Math.random()*POWERUP_TYPES.length)],born:Date.now()});
+  aiKillCount++;
+  if(mode==='single'){if(hasEff(effects,'shield'))gameStats.shieldKill=true;if(hasEff(effects,'ghost'))gameStats.ghostKill=true}
+  else{if(hasEff(effects1,'shield')||hasEff(effects2,'shield'))gameStats.shieldKill=true;if(hasEff(effects1,'ghost')||hasEff(effects2,'ghost'))gameStats.ghostKill=true}
+  showToast('💀 击杀 AI 蛇！');
+}
+
 best=parseInt(localStorage.getItem('snakeBest'))||0;
 
 function makeEffects(){return{speed:0,ghost:0,shield:0}}
@@ -423,11 +674,17 @@ function initGame(){
     score=0;gameOver=false;
     eatCount=0;pwrCount=0;earnedCrowns=0;crownMilestone=CROWN_EVERY;
     combo={count:0,lastEatTime:0};effects=makeEffects();
-    updateScoreEl('score',0);updateProgressEl(0);
+    droppedItems=[];cardTriggerCount=0;totalEats=0;scoreMul=1;speedMul=1;EFFECT_DURATION_BONUS=0;MAGNET_RANGE=0;cardActive=false;
+    gameStats={maxScore:0,maxLen:snake.length,maxSpeed:0,maxCombo:0,aiKills:0,cardCount:0,shieldKill:false,ghostKill:false};
+    SAFE_START_USED=false;BIG_FOOD_TRIGGER=hasUpgrade('big_appetite')?4:5;
+    if(hasUpgrade('start_magnet'))effects.magnet=Date.now()+3000;
+    updateScoreEl('score',0);updateProgressEl(0);spawnAISnakes();
   }else{
     snake1=[{x:1,y:3},{x:2,y:3},{x:3,y:3},{x:4,y:3},{x:5,y:3}];direction1=DIR.RIGHT;nextD1=DIR.RIGHT;score1=0;alive1=true;eatCount1=0;pwrCount1=0;earnedCrowns1=0;cm1=CROWN_EVERY;combo1={count:0,lastEatTime:0};effects1=makeEffects();
     snake2=[{x:27,y:25},{x:26,y:25},{x:25,y:25},{x:24,y:25},{x:23,y:25}];direction2=DIR.LEFT;nextD2=DIR.LEFT;score2=0;alive2=true;eatCount2=0;pwrCount2=0;earnedCrowns2=0;cm2=CROWN_EVERY;combo2={count:0,lastEatTime:0};effects2=makeEffects();
-    updateScoreEl('score1',0);updateScoreEl('score2',0);updateProgressEl(0);
+    droppedItems=[];cardTriggerCount=0;totalEats=0;scoreMul=1;speedMul=1;EFFECT_DURATION_BONUS=0;MAGNET_RANGE=0;cardActive=false;
+    gameStats={maxScore:0,maxLen:5,maxSpeed:0,maxCombo:0,aiKills:0,cardCount:0,shieldKill:false,ghostKill:false};
+    updateScoreEl('score1',0);updateScoreEl('score2',0);updateProgressEl(0);spawnAISnakes();
   }
   spawnFood();
 }
@@ -482,7 +739,7 @@ function spawnPowerup(){if(powerup)return;var pos=randomFreePos();if(!pos)return
 // ---- Effect tags ----
 function renderEffects(){
   var tags=[];
-  function ae(effs,p){var n=Date.now();if(typeof effs.speed==='number'&&effs.speed>n)tags.push({c:'#ffff00',t:p+'加速 '+Math.ceil((effs.speed-n)/1000)+'s'});if(typeof effs.ghost==='number'&&effs.ghost>n)tags.push({c:'#00ffff',t:p+'穿障 '+Math.ceil((effs.ghost-n)/1000)+'s'});if(typeof effs.shield==='number'&&effs.shield>n)tags.push({c:'#ffffff',t:p+'护盾 '+Math.ceil((effs.shield-n)/1000)+'s'})}
+  function ae(effs,p){var n=Date.now();if(typeof effs.speed==='number'&&effs.speed>n)tags.push({c:'#ffff00',t:p+'加速 '+Math.ceil((effs.speed-n)/1000)+'s'});if(typeof effs.ghost==='number'&&effs.ghost>n)tags.push({c:'#00ffff',t:p+'穿障 '+Math.ceil((effs.ghost-n)/1000)+'s'});if(typeof effs.shield==='number'&&effs.shield>n)tags.push({c:'#ffffff',t:p+'护盾 '+Math.ceil((effs.shield-n)/1000)+'s'});if(typeof effs.magnet==='number'&&effs.magnet>n)tags.push({c:'#ff8800',t:p+'磁铁 '+Math.ceil((effs.magnet-n)/1000)+'s'});if(typeof effs.freeze==='number'&&effs.freeze>n)tags.push({c:'#88ccff',t:p+'冰冻 '+Math.ceil((effs.freeze-n)/1000)+'s'})}
   if(mode==='single')ae(effects,'');else{if(alive1)ae(effects1,'P1 ');if(alive2)ae(effects2,'P2 ')}
   effectsBar.innerHTML=tags.map(function(t){return'<span class="effect-tag" style="background:'+t.c+'33;border:1px solid '+t.c+'">'+t.t+'</span>'}).join('');
 }
@@ -640,39 +897,54 @@ function drawOneSnake(snakeArr,dir,skinName){
       grad.addColorStop(0,'rgba('+fc+',0.35)');grad.addColorStop(1,'rgba('+fc+',0)');
       ctx.fillStyle=grad;ctx.beginPath();ctx.ellipse(p.cx-p.perpX*2,p.cy-p.perpY*2,s*0.6,s*0.9,Math.atan2(p.perpY,p.perpX)+Math.PI/2,0,Math.PI*2);ctx.fill();
     }
+    // Scale texture for fire
+    if(effect==='fire'){ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=0.8;for(var j=2;j<len-2;j+=3){var p=spine[j];ctx.beginPath();ctx.moveTo(p.cx-p.perpX*p.w*0.5,p.cy-p.perpY*p.w*0.5);ctx.lineTo(p.cx,p.cy);ctx.lineTo(p.cx+p.perpX*p.w*0.5,p.cy+p.perpY*p.w*0.5);ctx.stroke()}}
     if(effect==='lava'){
-      for(var j=1;j<len-1;j+=4){
+      for(var j=2;j<len-2;j+=4){
         var p=spine[j];
-        ctx.strokeStyle='rgba(255,120,20,'+(0.3+0.2*Math.sin(now/250+j))+')';ctx.lineWidth=1.2;
-        ctx.beginPath();ctx.moveTo(p.cx-2,p.cy-2);var nxt=j+1<len?spine[j+1]:p;ctx.lineTo(nxt.cx+1,nxt.cy+1);ctx.stroke();
+        var ca=0.3+0.3*Math.sin(now/400+j*1.5);
+        ctx.strokeStyle='rgba(255,140,20,'+ca+')';ctx.lineWidth=1.2;
+        ctx.beginPath();ctx.moveTo(p.cx-p.perpX*p.w*0.4+p.perpY*1.5,p.cy-p.perpY*p.w*0.4-p.perpX*1.5);
+        ctx.lineTo(p.cx+p.perpY*1,p.cy-p.perpX*1);
+        ctx.lineTo(p.cx+p.perpX*p.w*0.4-p.perpY*1.5,p.cy+p.perpY*p.w*0.4+p.perpX*1.5);ctx.stroke();
       }
     }
   }else if(effect==='neon'){
-    for(var j=1;j<len-1;j+=4){
+    for(var j=2;j<len-2;j+=4){
       var p=spine[j];
-      ctx.strokeStyle='rgba(255,0,255,'+(0.25+0.2*Math.sin(now/150+j))+')';ctx.lineWidth=1;
-      ctx.beginPath();ctx.moveTo(p.cx-p.perpX*p.w*0.4,p.cy-p.perpY*p.w*0.4);
-      ctx.lineTo(p.cx+p.perpY*2,p.cy-p.perpX*2);ctx.stroke();
+      ctx.strokeStyle='rgba(255,0,255,'+(0.35+0.25*Math.sin(now/150+j))+')';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(p.cx-p.perpX*p.w*0.5,p.cy-p.perpY*p.w*0.5);
+      ctx.lineTo(p.cx+p.perpY*1.5,p.cy-p.perpX*1.5);ctx.lineTo(p.cx+p.perpX*1,p.cy+p.perpY*1);ctx.stroke();
     }
+    // Breathing glow on outline
+    var breathAlpha=0.12+0.08*Math.sin(now/1000*Math.PI);
+    ctx.strokeStyle='rgba(0,255,220,'+breathAlpha+')';ctx.lineWidth=2;ctx.stroke();
   }else if(effect==='galaxy'){
-    for(var j=0;j<len-1;j+=3){
-      var p=spine[j];
-      var sx=p.cx+(Math.sin(j*5+now/500)*p.w*0.5),sy=p.cy+(Math.cos(j*7+now/400)*p.w*0.5);
-      var twinkle=0.5+0.5*Math.sin(now/200+j*3);
-      ctx.fillStyle='rgba(255,255,255,'+(0.4+0.3*twinkle)+')';ctx.beginPath();ctx.arc(sx,sy,1+twinkle*0.5,0,Math.PI*2);ctx.fill();
+    // Semi-transparent body overlay
+    ctx.globalAlpha=0.82;
+    for(var j=0;j<len-1;j+=2){
+      var p=spine[j];var starAlpha=0.3+0.4*Math.sin(now/300+j*2);
+      ctx.fillStyle='rgba(255,255,255,'+starAlpha+')';
+      ctx.beginPath();ctx.arc(p.cx+(Math.sin(j*7+now/500)*p.w*0.6),p.cy+(Math.cos(j*5+now/400)*p.w*0.6),0.8,0,Math.PI*2);ctx.fill();
     }
+    ctx.globalAlpha=1;
   }else if(effect==='thunder'){
     for(var j=2;j<len-2;j+=5){
       var p=spine[j];
-      ctx.strokeStyle='rgba(200,230,255,'+(0.4+0.3*Math.sin(now/80+j))+')';ctx.lineWidth=1.2;
-      ctx.beginPath();ctx.moveTo(p.cx-p.perpX*3,p.cy-p.perpY*3);
-      ctx.lineTo(p.cx+p.perpY*1.5,p.cy-p.perpX*1.5);ctx.lineTo(p.cx+p.perpX*3,p.cy+p.perpY*3);ctx.stroke();
+      ctx.strokeStyle='rgba(255,255,255,'+(0.45+0.3*Math.sin(now/60+j))+')';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(p.cx-p.perpX*p.w*0.6,p.cy-p.perpY*p.w*0.6);
+      ctx.lineTo(p.cx-p.perpY*1,p.cy+p.perpX*1);ctx.lineTo(p.cx+p.perpX*p.w*0.3,p.cy-p.perpY*p.w*0.3);
+      ctx.lineTo(p.cx+p.perpY*1,p.cy-p.perpX*1);ctx.stroke();
     }
   }else if(effect==='phantom'){
+    // Subtle outer glow
+    ctx.save();ctx.shadowColor='rgba(200,220,255,0.12)';ctx.shadowBlur=4;
+    ctx.strokeStyle='rgba(200,220,255,0.18)';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.restore();
     for(var j=1;j<len-1;j+=5){
       var p=spine[j];
       var rip=2.5+1.5*Math.sin(now/300+j);
-      ctx.strokeStyle='rgba(255,255,255,'+(0.1+0.08*Math.sin(now/200+j))+')';ctx.lineWidth=0.6;
+      ctx.strokeStyle='rgba(255,255,255,'+(0.08+0.06*Math.sin(now/200+j))+')';ctx.lineWidth=0.5;
       ctx.beginPath();ctx.arc(p.cx,p.cy,rip,0,Math.PI*2);ctx.stroke();
     }
   }
@@ -895,6 +1167,32 @@ function draw(){
   // Obstacles
   for(var oi=0;oi<obstacles.length;oi++){var ob=obstacles[oi];ctx.fillStyle='#444';ctx.fillRect(ob.x*CELL+3,ob.y*CELL+3,CELL-6,CELL-6);ctx.fillStyle='#555';ctx.fillRect(ob.x*CELL+4,ob.y*CELL+2,CELL-8,3);ctx.fillRect(ob.x*CELL+4,ob.y*CELL+CELL-5,CELL-8,3);ctx.fillStyle='#666';ctx.fillRect(ob.x*CELL+5,ob.y*CELL+5,CELL-10,CELL-10)}
 
+  // Dropped items
+  for(var di=droppedItems.length-1;di>=0;di--){
+    var dpi=droppedItems[di];var dpAge=Date.now()-dpi.born;
+    if(dpAge>AI_DROP_LIFE){droppedItems.splice(di,1);continue}
+    var dpAlpha=1-dpAge/AI_DROP_LIFE;
+    var dpx=dpi.x*CELL+CELL/2,dpy=dpi.y*CELL+CELL/2;
+    ctx.globalAlpha=dpAlpha*0.8;
+    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.beginPath();ctx.arc(dpx,dpy,CELL/2+1,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=dpi.type.color;ctx.shadowColor=dpi.type.color;ctx.shadowBlur=6;
+    ctx.beginPath();ctx.arc(dpx,dpy,CELL/2-1,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle='#fff';ctx.font='bold 10px "PingFang SC","Segoe UI",sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(dpi.type.icon,dpx,dpy);
+    ctx.globalAlpha=1;
+  }
+  // AI Snakes
+  for(var ai=0;ai<aiSnakes.length;ai++){
+    var ais=aiSnakes[ai];if(!ais.alive)continue;
+    var ab=ais.body;
+    for(var j=0;j<ab.length;j++){
+      var t=j/Math.max(ab.length-1,1),r=Math.floor(100+t*40),g=Math.floor(80+t*20),b=Math.floor(60+t*10);
+      ctx.fillStyle='rgb('+r+','+g+','+b+')';
+      ctx.fillRect(ab[j].x*CELL+2,ab[j].y*CELL+2,CELL-4,CELL-4);
+    }
+    var ah=ab[ab.length-1];
+    ctx.fillStyle='#c44';ctx.fillRect(ah.x*CELL+1,ah.y*CELL+1,CELL-2,CELL-2);
+  }
   // Food
   if(food){ctx.fillStyle='#e94560';ctx.shadowColor='#e94560';ctx.shadowBlur=10;ctx.beginPath();ctx.arc(food.x*CELL+CELL/2,food.y*CELL+CELL/2,CELL/2-2,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0}
 
@@ -942,7 +1240,7 @@ function processEat(isBig,pwrCnt,cmb,scr,ecRef,seId,effRef){
   var spdMul=calcSpeedMultiplier(scr),comboMul=getComboMultiplier(cmb);
   var pts=Math.floor(base*spdMul*comboMul);
   scr+=pts;updateScoreEl(seId,scr);
-  if(!isBig){ecRef.val++;updateProgressEl(ecRef.val);if(ecRef.val>=5){ecRef.val=0;updateProgressEl(0);spawnBigFood()}spawnFood();pwrCnt.val++;if(pwrCnt.val>=POWERUP_SPAWN_EVERY){pwrCnt.val=0;spawnPowerup()}}
+  if(!isBig){ecRef.val++;updateProgressEl(ecRef.val);if(ecRef.val>=BIG_FOOD_TRIGGER){ecRef.val=0;updateProgressEl(0);spawnBigFood()}spawnFood();pwrCnt.val++;if(pwrCnt.val>=POWERUP_SPAWN_EVERY){pwrCnt.val=0;spawnPowerup()}}
   else{bigFood=null}
   if(cmb.count===2)showToast('🔥 Combo x2!');
   if(cmb.count===5)showToast('💥 Combo x5!');
@@ -953,11 +1251,15 @@ function processEat(isBig,pwrCnt,cmb,scr,ecRef,seId,effRef){
 // ---- Apply powerup ----
 function applyPw(effRef,type,snakeRef){
   var now=Date.now();
+  var durBonus=(EFFECT_DURATION_BONUS||0)+(hasUpgrade('long_effect_perm')?2000:0);
   switch(type.id){
-    case'speed':effRef.speed=now+type.dur;showToast('⚡ 加速！'+type.dur/1000+'s');break;
-    case'ghost':effRef.ghost=now+type.dur;showToast('👻 穿障！'+type.dur/1000+'s');break;
-    case'shield':effRef.shield=now+type.dur;showToast('🛡️ 护盾！'+type.dur/1000+'s');break;
+    case'speed':effRef.speed=now+type.dur+durBonus;showToast('⚡ 加速！'+(type.dur+durBonus)/1000+'s');break;
+    case'ghost':effRef.ghost=now+type.dur+durBonus;showToast('👻 穿障！'+(type.dur+durBonus)/1000+'s');break;
+    case'shield':effRef.shield=now+type.dur+durBonus;showToast('🛡️ 护盾！'+(type.dur+durBonus)/1000+'s');break;
     case'shrink':var nl=Math.max(2,Math.floor(snakeRef.length/2));snakeRef.splice(0,snakeRef.length-nl);showToast('✂️ 蛇身减半！');break;
+    case'magnet':effRef.magnet=now+type.dur+durBonus;showToast('🧲 磁铁！'+(type.dur+durBonus)/1000+'s');break;
+    case'freeze':effRef.freeze=now+type.dur+durBonus;showToast('❄️ 冰冻！'+(type.dur+durBonus)/1000+'s');break;
+    case'bomb':var hd=snakeRef[snakeRef.length-1];for(var dx=-2;dx<=2;dx++)for(var dy=-2;dy<=2;dy++){var px=((hd.x+dx)%GRID+GRID)%GRID,py=((hd.y+dy)%GRID+GRID)%GRID;for(var ai=0;ai<aiSnakes.length;ai++){var a=aiSnakes[ai];if(a.alive&&a.body[a.body.length-1].x===px&&a.body[a.body.length-1].y===py)killAISnake(a)}for(var oi=obstacles.length-1;oi>=0;oi--){if(obstacles[oi].x===px&&obstacles[oi].y===py)obstacles.splice(oi,1)}}showToast('💣 炸弹！清除范围敌人');break;
   }
 }
 
@@ -965,27 +1267,35 @@ function applyPw(effRef,type,snakeRef){
 function chkCrown(scr,msRef,erRef){if(scr>=msRef.val){erRef.val++;msRef.val+=CROWN_EVERY;showToast('👑 获得王冠！(+'+erRef.val+')')}}
 
 // ---- Update ----
-function update(){if(mode==='single')upSingle();else upDual();draw()}
+function update(){if(mode==='single')upSingle();else upDual();for(var ai=0;ai<aiSnakes.length;ai++)updateAISnake(aiSnakes[ai]);draw()}
 function upSingle(){
   if(gameOver)return;direction=nextDirection;
   var hd=snake[snake.length-1],nh={x:hd.x+direction.x,y:hd.y+direction.y};
   // always wrap around walls
   nh.x=((nh.x%GRID)+GRID)%GRID;nh.y=((nh.y%GRID)+GRID)%GRID
-  if(!isInvincible(effects)&&hitObs(nh)){endSingle();return}
+  if(!isInvincible(effects)&&hitObs(nh)){if(hasUpgrade('safe_start')&&!SAFE_START_USED){SAFE_START_USED=true;nh.x=hd.x;nh.y=hd.y}else{endSingle();return}}
+  // AI snake body collision
+  for(var ai=0;ai<aiSnakes.length;ai++){var as=aiSnakes[ai];if(as.alive&&checkHit(snake,as.body)&&!isInvincible(effects)){endSingle();return}}
+  // Magnet: attract nearby food
+  if(hasEff(effects,'magnet')&&food){var mrange=(MAGNET_RANGE||0)+3;if(Math.abs(food.x-nh.x)+Math.abs(food.y-nh.y)<=mrange){var mdx=food.x-nh.x,mdy=food.y-nh.y;if(Math.abs(mdx)>Math.abs(mdy))food.x-=mdx>0?1:(mdx<0?-1:0);else if(mdy!==0)food.y-=mdy>0?1:(mdy<0?-1:0)}}
   var efood=food&&nh.x===food.x&&nh.y===food.y;
   var ebig=bigFood&&nh.x===bigFood.x&&nh.y===bigFood.y;
   var epw=powerup&&nh.x===powerup.x&&nh.y===powerup.y;
   snake.push(nh);if(!efood&&!ebig&&!epw)snake.shift();
   if(!hasEff(effects,'shield')&&checkSelf(snake)){endSingle();return}
+  // Pick up dropped items
+  for(var di=droppedItems.length-1;di>=0;di--){var dpi=droppedItems[di];if(nh.x===dpi.x&&nh.y===dpi.y){applyPw(effects,dpi.type,snake);droppedItems.splice(di,1);break}}
   var pwrRef={val:pwrCount},ecRef={val:eatCount};
-  if(efood){score=processEat(false,pwrRef,combo,score,ecRef,'score',effects);pwrCount=pwrRef.val;eatCount=ecRef.val;var er={val:earnedCrowns},ms={val:crownMilestone};chkCrown(score,ms,er);earnedCrowns=er.val;crownMilestone=ms.val}
-  if(ebig){score=processEat(true,pwrRef,combo,score,ecRef,'score',effects);pwrCount=pwrRef.val;eatCount=ecRef.val;var er2={val:earnedCrowns},ms2={val:crownMilestone};chkCrown(score,ms2,er2);earnedCrowns=er2.val;crownMilestone=ms2.val}
+  if(efood){score=processEat(false,pwrRef,combo,score,ecRef,'score',effects);pwrCount=pwrRef.val;eatCount=ecRef.val;totalEats++;score=Math.floor(score*scoreMul);updateScoreEl('score',score);if(totalEats%8===0&&cardTriggerCount<cardMaxPerGame&&!cardActive){var ctxRef={scoreRef:{val:score},seId:'score'};triggerCards(snake,effects,ctxRef);score=ctxRef.scoreRef.val;updateScoreEl('score',score)};var er={val:earnedCrowns},ms={val:crownMilestone};chkCrown(score,ms,er);earnedCrowns=er.val;crownMilestone=ms.val}
+  if(ebig){score=processEat(true,pwrRef,combo,score,ecRef,'score',effects);pwrCount=pwrRef.val;eatCount=ecRef.val;totalEats++;score=Math.floor(score*scoreMul);updateScoreEl('score',score);if(totalEats%8===0&&cardTriggerCount<cardMaxPerGame&&!cardActive){var ctxRef2={scoreRef:{val:score},seId:'score'};triggerCards(snake,effects,ctxRef2);score=ctxRef2.scoreRef.val;updateScoreEl('score',score)};var er2={val:earnedCrowns},ms2={val:crownMilestone};chkCrown(score,ms2,er2);earnedCrowns=er2.val;crownMilestone=ms2.val}
   if(epw){applyPw(effects,powerup.type,snake);powerup=null}
   if(bigFood&&Date.now()-bigFood.born>=BIG_FOOD_LIFE)bigFood=null;
   if(powerup&&Date.now()-powerup.born>=POWERUP_LIFE)powerup=null;
+  for(var di=droppedItems.length-1;di>=0;di--){if(Date.now()-droppedItems[di].born>=AI_DROP_LIFE)droppedItems.splice(di,1)}
   if(score>best){best=score;updateScoreEl('best',best);localStorage.setItem('snakeBest',best)}
+  gameStats.maxScore=Math.max(gameStats.maxScore,score);gameStats.maxLen=Math.max(gameStats.maxLen,snake.length);gameStats.maxSpeed=Math.max(gameStats.maxSpeed,calcSpeedLevel(score));if(combo)gameStats.maxCombo=Math.max(gameStats.maxCombo,combo.count);
 }
-function endSingle(){gameOver=true;if(earnedCrowns>0){addCrowns(earnedCrowns);updateCrownDisplay();buildSkinBars()}if(score>0){var r=addScore(score);renderLB(r.newEntry)}}
+function endSingle(){gameOver=true;if(earnedCrowns>0){addCrowns(earnedCrowns);updateCrownDisplay();buildSkinBars()}if(score>0){var r=addScore(score);renderLB(r.newEntry)}gameStats.aiKills=aiKillCount;gameStats.cardCount=cardTriggerCount;checkAchievements();renderAchievements()}
 
 function upDual(){
   var bothDead=true,now=Date.now();
@@ -995,14 +1305,18 @@ function upDual(){
     var hd=p.snake[p.snake.length-1],nh={x:hd.x+p.direction.x,y:hd.y+p.direction.y};
     nh.x=((nh.x%GRID)+GRID)%GRID;nh.y=((nh.y%GRID)+GRID)%GRID
     if(!isInvincible(p.effects)&&hitObs(nh)){p.alive=false;p.snake=[];return}
+    // AI snake collision
+    for(var ai=0;ai<aiSnakes.length;ai++){var as=aiSnakes[ai];if(as.alive&&checkHit(p.snake,as.body)&&!isInvincible(p.effects)){p.alive=false;p.snake=[];return}}
     var ef=food&&nh.x===food.x&&nh.y===food.y;
     var eb=bigFood&&nh.x===bigFood.x&&nh.y===bigFood.y;
     var ep=powerup&&nh.x===powerup.x&&nh.y===powerup.y;
     p.snake.push(nh);if(!ef&&!eb&&!ep)p.snake.shift();
     if(!hasEff(p.effects,'shield')&&(checkSelf(p.snake)||checkHit(p.snake,p.other))){p.alive=false;p.snake=[];return}
+    // Pick up dropped items
+    for(var di=droppedItems.length-1;di>=0;di--){var dpi=droppedItems[di];if(nh.x===dpi.x&&nh.y===dpi.y){applyPw(p.effects,dpi.type,p.snake);droppedItems.splice(di,1);break}}
     var pwrRef={val:p.pwrCount},ecRef={val:p.eatCount};
-    if(ef){p.score=processEat(false,pwrRef,p.combo,p.score,ecRef,p.seId,p.effects);p.pwrCount=pwrRef.val;p.eatCount=ecRef.val;var er={val:p.earned},ms={val:p.cm};chkCrown(p.score,ms,er);p.earned=er.val;p.cm=ms.val}
-    if(eb){p.score=processEat(true,pwrRef,p.combo,p.score,ecRef,p.seId,p.effects);p.pwrCount=pwrRef.val;p.eatCount=ecRef.val;var er2={val:p.earned},ms2={val:p.cm};chkCrown(p.score,ms2,er2);p.earned=er2.val;p.cm=ms2.val}
+    if(ef){p.score=processEat(false,pwrRef,p.combo,p.score,ecRef,p.seId,p.effects);p.pwrCount=pwrRef.val;p.eatCount=ecRef.val;totalEats++;p.score=Math.floor(p.score*scoreMul);updateScoreEl(p.seId,p.score);if(totalEats%8===0&&cardTriggerCount<cardMaxPerGame&&!cardActive){var ctxr={scoreRef:{val:p.score},seId:p.seId};triggerCards(p.snake,p.effects,ctxr);p.score=ctxr.scoreRef.val;updateScoreEl(p.seId,p.score)};var er={val:p.earned},ms={val:p.cm};chkCrown(p.score,ms,er);p.earned=er.val;p.cm=ms.val}
+    if(eb){p.score=processEat(true,pwrRef,p.combo,p.score,ecRef,p.seId,p.effects);p.pwrCount=pwrRef.val;p.eatCount=ecRef.val;totalEats++;p.score=Math.floor(p.score*scoreMul);updateScoreEl(p.seId,p.score);if(totalEats%8===0&&cardTriggerCount<cardMaxPerGame&&!cardActive){var ctxr2={scoreRef:{val:p.score},seId:p.seId};triggerCards(p.snake,p.effects,ctxr2);p.score=ctxr2.scoreRef.val;updateScoreEl(p.seId,p.score)};var er2={val:p.earned},ms2={val:p.cm};chkCrown(p.score,ms2,er2);p.earned=er2.val;p.cm=ms2.val}
     if(ep){applyPw(p.effects,powerup.type,p.snake);powerup=null}
     if(p.score>best){best=p.score;updateScoreEl('best',best);localStorage.setItem('snakeBest',best)}
     bothDead=false;
@@ -1041,11 +1355,12 @@ function upDual(){
   pu(p1w);pu(p2w);
   if(bigFood&&now-bigFood.born>=BIG_FOOD_LIFE)bigFood=null;
   if(powerup&&now-powerup.born>=POWERUP_LIFE)powerup=null;
+  for(var di=droppedItems.length-1;di>=0;di--){if(now-droppedItems[di].born>=AI_DROP_LIFE)droppedItems.splice(di,1)}
   if(bothDead){var tot=earnedCrowns1+earnedCrowns2;if(tot>0){addCrowns(tot);updateCrownDisplay();buildSkinBars()}var mx=Math.max(score1,score2);if(mx>0){var r=addScore(mx);renderLB(r.newEntry)}}
 }
 
 // ---- Loop ----
-function loop(){frameCount++;update();var spd;if(mode==='single'){spd=calcSpeed(score);if(hasEff(effects,'speed'))spd=Math.floor(spd/2)}else{var s1=alive1?calcSpeed(score1):BASE_SPEED,s2=alive2?calcSpeed(score2):BASE_SPEED;if(alive1&&hasEff(effects1,'speed'))s1=Math.floor(s1/2);if(alive2&&hasEff(effects2,'speed'))s2=Math.floor(s2/2);spd=Math.min(s1,s2)}gameLoop=setTimeout(function(){requestAnimationFrame(loop)},spd)}
+function loop(){frameCount++;if(!cardActive)update();var spd;if(mode==='single'){spd=Math.max(MIN_SPEED,Math.floor(calcSpeed(score)*(1-speedMul)));if(hasEff(effects,'speed'))spd=Math.floor(spd/2)}else{var s1=alive1?calcSpeed(score1):BASE_SPEED,s2=alive2?calcSpeed(score2):BASE_SPEED;if(alive1&&hasEff(effects1,'speed'))s1=Math.floor(s1/2);if(alive2&&hasEff(effects2,'speed'))s2=Math.floor(s2/2);spd=Math.min(s1,s2)}gameLoop=setTimeout(function(){requestAnimationFrame(loop)},spd)}
 
 // ---- Input ----
 document.addEventListener('keydown',function(e){
@@ -1150,7 +1465,7 @@ function updateHint(){
 }
 
 // ---- Init ----
-renderLB();buildSkinBars();updateCrownDisplay();updateDiamondDisplay();initGame();updateDpadVisibility();updateHint();
+renderLB();buildSkinBars();renderUpgrades();renderAchievements();updateCrownDisplay();updateDiamondDisplay();initGame();updateDpadVisibility();updateHint();
 draw();loop();
 </script>
 </body>
